@@ -1,0 +1,15 @@
+#include "structs.h"
+
+#ifndef _CLIENT_PROTOCOL_H_
+#define _CLIENT_PROTOCOL_H_
+
+int signup_protocol_client(int sd, char* user, char* pw);
+int login_protocol_client(int sd, char* user, char* pw, short port);
+int logout_protocol_client(int sd, char* user);
+int new_chat_protocol_client(int sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg);
+void hanging_protocol_client(int sd, char* user);
+void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat);
+void receive_file_protocol_client(int sd);
+void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename);
+
+#endif
