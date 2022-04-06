@@ -345,3 +345,29 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   lmsg = htons(0);
   ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 }
+
+void group_protocol(int i, struct user_data** utenti, char* buffer){
+  char *dest;
+  char *sender;
+  uint16_t lmsg;
+  int len, ret;
+
+  struct user_data* c_user = *utenti;
+
+  while(c_user!=NULL){
+    if(c_user->timestamp_logout!=NULL){
+      //INVIO LA LUNGHEZZA DELLO USERNAME
+      len = strlen(c_user->user_dest)+1;
+      lmsg = htons(len);
+      ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+
+      //INVIO LO USERNAME
+      sprintf(buffer,"%s", c_user->user_dest);
+      ret = send_all(i, (void*) buffer, len, 0);
+    }
+    c_user = c_user->next;
+  }
+  //TERMINO LA PROCEDURA INVIANDO ZERO
+  lmsg = htons(0);
+  ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+}

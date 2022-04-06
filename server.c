@@ -118,6 +118,10 @@ int main(int argc, char const *argv[]) {
             printf("RICHIESTA DI LOGOUT\n");
             logout_protocol(i, &registro, buffer);
           }
+          else if(strcmp(buffer,"GRP")==0){
+            printf("RICHIESTA DI GROUP\n");
+            group_protocol(i, &registro, buffer);
+          }
         }
       }
     }

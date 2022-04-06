@@ -10,5 +10,6 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
 int forward_msg(short port, char* sender, char* msg);
 void hanging_protocol(int i, struct destinatario** destinatari, char* buffer);
 void show_protocol(int i, struct destinatario** destinatari, char* buffer);
+void group_protocol(int i, struct user_data** utenti, char* buffer);
 
 #endif

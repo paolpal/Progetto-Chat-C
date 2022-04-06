@@ -65,7 +65,7 @@ void chat(int sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user){
           strncpy(cmd, buffer, 5);
           cmd[5]='\0';
           if(strcmp(buffer,"\\q\n")==0)chatting=0;
-          if(strcmp(buffer,"\\u\n")==0)chatting=0;
+          if(strcmp(buffer,"\\u\n")==0)chatting=0; // group_protocol_client();
           if(strcmp(buffer,"\\a\n")==0)chatting=0;
           else if(strcmp(cmd,"share")==0){
             strtok(buffer, " ");
