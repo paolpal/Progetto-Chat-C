@@ -320,10 +320,6 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     recv_all(sd, (void*)buffer, len, 0);
     strcpy(msg_text,buffer);
 
-    // **********************
-    // ARCHIVIA IL MESSAGGIO
-    // **********************
-
     msg = (struct msg*) malloc(sizeof(struct msg));
     msg->dest = NULL;
     len = strlen(sender_user)+1;
@@ -389,4 +385,29 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){ /
   send_file_b(filename, sd);
 
   close(sd);
+}
+
+void group_protocol_client(int sd){
+  int ret, len;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+  char *username;
+
+  //INVIO LA RICHIESTA DI GROUP
+  sprintf(buffer,"%s", "GRP");
+  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+
+  while(1){
+    //RICEVO LA LUNGHEZZA DELLO USERNAME
+    recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+    len = ntohs(lmsg);
+    if(len == 0) break;
+    username = (char*) malloc(len*sizeof(char));
+
+    //RICEVO LO USERNAME
+    recv_all(sd, (void*)buffer, len, 0);
+    strcpy(username, buffer);
+
+    printf("%s\n", username);
+  }
 }

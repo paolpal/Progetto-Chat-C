@@ -11,5 +11,6 @@ void hanging_protocol_client(int sd, char* user);
 void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat);
 void receive_file_protocol_client(int sd);
 void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename);
+void group_protocol_client(int sd);
 
 #endif

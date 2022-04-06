@@ -6,7 +6,7 @@
 // il processo figlio scrive nella pipe SON
 // e ascolta su FATHER
 
-void chat(int sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user){
+void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user){
   char buffer[BUF_LEN];
   char msg[BUF_LEN];
   char *filename;
@@ -65,7 +65,7 @@ void chat(int sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user){
           strncpy(cmd, buffer, 5);
           cmd[5]='\0';
           if(strcmp(buffer,"\\q\n")==0)chatting=0;
-          if(strcmp(buffer,"\\u\n")==0)chatting=0; // group_protocol_client();
+          if(strcmp(buffer,"\\u\n")==0) group_protocol_client(srv_sd);
           if(strcmp(buffer,"\\a\n")==0)chatting=0;
           else if(strcmp(cmd,"share")==0){
             strtok(buffer, " ");
@@ -80,7 +80,7 @@ void chat(int sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user){
               send_msg(cht_sd, my_user, msg);
             }
             else {
-              cht_sd = new_chat_protocol_client(sd, my_user, dest_user, &dest_addr, msg);
+              cht_sd = new_chat_protocol_client(srv_sd, my_user, dest_user, &dest_addr, msg);
             }
             //printf("****** DEBUG 1 ******\n");
             sprintf(buffer, "MSG");
