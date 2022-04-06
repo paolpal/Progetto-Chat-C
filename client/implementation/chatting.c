@@ -12,7 +12,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   char *filename;
   char cmd[6];
   int i;
-  struct user* chat_list = NULL;
+  struct user* chatroom = NULL;
   int cht_sd = 0;
   int chatting = 1;
 
@@ -34,7 +34,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   //dest.user = dest_user;
   //dest.port = 0;
 
-  append_user(&chat_list, dest_user);
+  append_user(&chatroom, dest_user);
 
   //printf("Hai iniziato una chat con %s\n", dest_user);
 
@@ -49,7 +49,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           //printf("RICHIESTA DA MAIN PROCESS\n");
           // ricevo un nome e rispondo 1 se sto chattando, 0 se non sto chattando con lui
           read(p_father_sd, buffer, BUF_LEN);
-          if(chatting_with(buffer, chat_list)) {
+          if(chatting_with(buffer, chatroom)) {
             write(p_son_sd,"1", strlen("1")+1);
             //printf("UGUALI\n");
           }
@@ -64,9 +64,9 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           fgets(buffer, BUF_LEN, stdin);
           strncpy(cmd, buffer, 5);
           cmd[5]='\0';
-          if(strcmp(buffer,"\\q\n")==0)chatting=0;
-          if(strcmp(buffer,"\\u\n")==0) group_protocol_client(srv_sd);
-          if(strcmp(buffer,"\\a\n")==0)chatting=0;
+          if(strcmp(cmd,"\\q\n")==0)chatting=0;
+          else if(strcmp(cmd,"\\u\n")==0) group_protocol_client(srv_sd);
+          else if(strcmp(cmd,"\\a\n")==0)chatting=0;
           else if(strcmp(cmd,"share")==0){
             strtok(buffer, " ");
             filename = strtok(NULL, " ");

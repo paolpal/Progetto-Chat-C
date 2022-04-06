@@ -347,15 +347,13 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
 }
 
 void group_protocol(int i, struct user_data** utenti, char* buffer){
-  char *dest;
-  char *sender;
   uint16_t lmsg;
   int len, ret;
 
   struct user_data* c_user = *utenti;
 
   while(c_user!=NULL){
-    if(c_user->timestamp_logout!=NULL){
+    if(c_user->timestamp_logout==NULL){
       //INVIO LA LUNGHEZZA DELLO USERNAME
       len = strlen(c_user->user_dest)+1;
       lmsg = htons(len);
