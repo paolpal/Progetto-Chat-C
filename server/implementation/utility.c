@@ -58,7 +58,7 @@ int present(struct user_data** head_ref, char *username){
   struct user_data* current = *head_ref;
   int found = 0;
   while(current != NULL){
-    if(strcmp(current->user_dest, username)==0) found = 1;
+    if(strcmp(current->user_dest, username)==0 && current->timestamp_logout!=NULL) found = 1;
     current = current->next;
   }
   return found;
@@ -88,7 +88,16 @@ void reset_timestamp(struct user_data** head_ref, char *username){
 
 
 // ATTENTO AL DOPPIO LOGIN
-// se sono già loggato (timestamp_logout == NULL) allora non posso loggare un'altra volta (O si?) (Problema della doppia porta, il primo client non riceve più i messaggi)
+// se sono già loggato (timestamp_logout == NULL) allora non posso loggare un'altra volta (O si?)
+// (Problema della doppia porta, il primo client non riceve più i messaggi)
+//
+// ************************
+// LA PORTA NON VIENE AGGIORNATA
+// LA PORTA NON VIENE AGGIORNATA
+// LA PORTA NON VIENE AGGIORNATA
+// LA PORTA NON VIENE AGGIORNATA
+// LA PORTA NON VIENE AGGIORNATA
+// ************************
 void push_registro(struct user_data** head_ref, char *username, short port){
   if(!present(head_ref, username)){
     struct user_data* new_node = (struct user_data*) malloc(sizeof(struct user_data));

@@ -356,6 +356,12 @@ void receive_file_protocol_client(int sd){ //char* buffer){
   //free(filename);
 }
 
+// *********************
+// Può diventare un processo a
+// se stante per l'invio di
+// un file, senza rallenatre la chat
+// *********************
+
 void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){ //char* buffer){
   int ret, len, sd;
   uint16_t lmsg;
@@ -387,7 +393,13 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){ /
   close(sd);
 }
 
-void group_protocol_client(int sd){
+// **************
+// chiedo al server
+// l'elenco degli utenti
+// ATTIVI
+// **************
+
+void group_protocol_client(int srv_sd){
   int ret, len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
@@ -395,19 +407,60 @@ void group_protocol_client(int sd){
 
   //INVIO LA RICHIESTA DI GROUP
   sprintf(buffer,"%s", "GRP");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   while(1){
     //RICEVO LA LUNGHEZZA DELLO USERNAME
-    recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+    recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
     len = ntohs(lmsg);
     if(len == 0) break;
     username = (char*) malloc(len*sizeof(char));
 
     //RICEVO LO USERNAME
-    recv_all(sd, (void*)buffer, len, 0);
+    recv_all(srv_sd, (void*)buffer, len, 0);
     strcpy(username, buffer);
 
     printf("%s\n", username);
   }
+}
+
+void add_user_request_protocol_client(int cht_sd, char* username){
+  int len, ret;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+
+  //INVIO LA RICHIESTA DI AGGIUNTA USERNAME
+  sprintf(buffer,"%s", "ADD");
+  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DELLO USERNAME
+  len = strlen(username)+1;
+  lmsg = htons(len);
+  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+
+  //INVIO LO USERNAME
+  sprintf(buffer,"%s", username);
+  ret = send(cht_sd, (void*) buffer, len, 0);
+}
+
+void add_user_protocol_client(int sd, int p_father_sd){
+  int ret, len;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+  char *username;
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
+  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  username = (char*) malloc(len*sizeof(char));
+
+  //RICEVO LO USERNAME
+  ret = recv_all(sd, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", username);
+
+  //AGGIUNGO L'UTENTE AL CHATTING PROCESS
+  sprintf(buffer, "ADD");
+  write(p_father_sd, buffer, strlen(buffer)+1);
+  sprintf(buffer, "%s", username);
+  write(p_father_sd, buffer, strlen(buffer)+1);
 }

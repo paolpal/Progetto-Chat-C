@@ -13,7 +13,7 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-void append_user(struct user** head_ref, char* username);
+struct user* append_user(struct user** head_ref, char* username);
 ssize_t p_read_all(int fd, char* buffer, int b_size);
 struct msg* create_my_msg(char* dest, char* text);
 

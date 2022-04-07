@@ -106,9 +106,9 @@ int main(int argc, char const *argv[]) {
         }
         else if(chatting && i==p_son_sd[0]){
           //printf("SONO QUA?\n");
-          read(p_son_sd[0], buffer, 4);
+          read(p_son_sd[0], buffer, REQ_LEN);
           if(strcmp(buffer,"MSG")==0){
-            printf("Sto archiviando i miei messaggi\n");
+            //printf("Sto archiviando i miei messaggi\n");
             read(p_son_sd[0], buffer, BUF_LEN);
             dest = strtok(buffer,":");
             msg_text = &buffer[strlen(dest)+1];
@@ -234,6 +234,10 @@ int main(int argc, char const *argv[]) {
             //printf("Messaggio ricevuto\n");
             //printf("RICHIESTA DI MESSAGGIO\n");
             recv_msg(i, p_father_sd[1], p_son_sd[0], chatting, &l_chat, buffer);
+          }
+          else if(strcmp(buffer, "ADD")==0){
+            //printf("RICEZIONE FILE\n");
+            add_user_protocol_client(i, p_father_sd[1]);
           }
           else if(strcmp(buffer, "SHR")==0){
             //printf("RICEZIONE FILE\n");

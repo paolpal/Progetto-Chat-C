@@ -10,10 +10,13 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   char buffer[BUF_LEN];
   char msg[BUF_LEN];
   char *filename;
+  char *username;
   char cmd[6];
+  char sh_cmd[3];
   int i;
   struct user* chatroom = NULL;
-  int cht_sd = 0;
+  struct user* user = NULL;
+  //int cht_sd = 0;
   int chatting = 1;
 
   int fdmax;
@@ -30,12 +33,13 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   FD_SET(p_father_sd, &master);
 
   //struct contatto dest;
-  struct sockaddr_in dest_addr;
+  //struct sockaddr_in dest_addr;
   //dest.user = dest_user;
   //dest.port = 0;
 
   append_user(&chatroom, dest_user);
 
+  if(chatroom==NULL) printf("TUTTO A PUTTANE\n");
   //printf("Hai iniziato una chat con %s\n", dest_user);
 
   while(chatting){
@@ -47,15 +51,22 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
       if(FD_ISSET(i, &read_fds)){
         if(i==p_father_sd){
           //printf("RICHIESTA DA MAIN PROCESS\n");
-          // ricevo un nome e rispondo 1 se sto chattando, 0 se non sto chattando con lui
-          read(p_father_sd, buffer, BUF_LEN);
-          if(chatting_with(buffer, chatroom)) {
-            write(p_son_sd,"1", strlen("1")+1);
-            //printf("UGUALI\n");
+          // CHK : ricevo un nome e rispondo 1 se sto chattando, 0 se non sto chattando con lui
+          read(p_father_sd, buffer, REQ_LEN);
+          if(strcmp(buffer,"CHK")==0){
+            read(p_father_sd, buffer, BUF_LEN);
+            if(chatting_with(buffer, chatroom)) {
+              write(p_son_sd,"1\0", strlen("1")+1);
+            }
+            else {
+              write(p_son_sd,"0\0",strlen("0")+1);
+            }
           }
-          else {
-            write(p_son_sd,"0",strlen("0")+1);
-            //printf("DIVERSI\n");
+          else if(strcmp(buffer,"ADD")==0){
+            read(p_father_sd, buffer, BUF_LEN);
+            printf("%s %d\n", buffer, (int)strlen(buffer));
+            if(strcmp(my_user, buffer)!=0)
+              append_user(&chatroom, buffer);
           }
           //printf("RISPOSTO AL MAIN PROCESS\n");
         }
@@ -63,28 +74,55 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           //printf("RICHIESTA DA STDIN\n");
           fgets(buffer, BUF_LEN, stdin);
           strncpy(cmd, buffer, 5);
+          strncpy(sh_cmd, buffer, 2);
           cmd[5]='\0';
-          if(strcmp(cmd,"\\q\n")==0)chatting=0;
-          else if(strcmp(cmd,"\\u\n")==0) group_protocol_client(srv_sd);
-          else if(strcmp(cmd,"\\a\n")==0)chatting=0;
+          sh_cmd[2]='\0';
+          if(strcmp(sh_cmd,"\\q")==0)chatting=0;
+          else if(strcmp(sh_cmd,"\\p")==0) print_chatroom(chatroom);
+          else if(strcmp(sh_cmd,"\\u")==0) group_protocol_client(srv_sd);
+          else if(strcmp(sh_cmd,"\\a")==0) {
+            strtok(buffer, " ");
+            username = strtok(NULL, "\n");
+            //username = strtok(username, "\n");
+            printf("%s %d\n", username, (int)strlen(username));
+            user = chatroom;
+            while(user!=NULL){
+              if(user->cht_sd != 0){
+                add_user_request_protocol_client(user->cht_sd, username);
+              }
+              user = user->next;
+            }
+            // STAMPA CHATROOM
+            append_user(&chatroom, username);
+            //print_chatroom(chatroom);
+          }
           else if(strcmp(cmd,"share")==0){
             strtok(buffer, " ");
             filename = strtok(NULL, " ");
-            if(cht_sd != 0){
-              send_file_protocol_client(&dest_addr, filename);
+            user = chatroom;
+            while(user!=NULL){
+              if(user->cht_sd != 0){
+                send_file_protocol_client(&user->addr, filename);
+              }
+              user = user->next;
             }
           }
           else {
-            strcpy(msg,buffer);
-            if(cht_sd != 0){
-              send_msg(cht_sd, my_user, msg);
-            }
-            else {
-              cht_sd = new_chat_protocol_client(srv_sd, my_user, dest_user, &dest_addr, msg);
+            // INVIO MESSAGGIO NORMALE
+            user = chatroom;
+            while(user!=NULL){
+              strcpy(msg, buffer);
+              if(user->cht_sd != 0){
+                send_msg(user->cht_sd, my_user, msg);
+              }
+              else {
+                user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->username, &user->addr, msg);
+              }
+              user = user->next;
             }
             //printf("****** DEBUG 1 ******\n");
             sprintf(buffer, "MSG");
-            write(p_son_sd, buffer, strlen(buffer)+1);
+            write(p_son_sd, buffer, REQ_LEN);
             //printf("****** DEBUG 2 ******\n");
             sprintf(buffer, "%s:%s", dest_user, msg);
             write(p_son_sd, buffer, strlen(buffer)+1);
@@ -95,7 +133,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
     }
   }
   write(p_son_sd,"END",strlen("END")+1);
-  if(cht_sd != 0) close(cht_sd);
+  //if(cht_sd != 0) close(cht_sd);
 }
 
 /*
@@ -168,7 +206,9 @@ void recv_msg(int cht_sd, int p_father_sd, int p_son_sd, int chatting, struct ch
   //COMUNICO CON IL CHATTING PROCESS SE ATTIVO
   if(chatting){
     //printf("Chiedo se sta chattando con USER\n");
-    write(p_father_sd,messaggio->sender,strlen(messaggio->sender)+1);
+    sprintf(buffer, "CHK");
+    write(p_father_sd, buffer, REQ_LEN);
+    write(p_father_sd, messaggio->sender, strlen(messaggio->sender)+1);
     //printf("Attendo la risposta\n");
     //p_read_all(p_son_sd, buffer, sizeof(buffer));
     read(p_son_sd, buffer, sizeof(buffer));
@@ -240,11 +280,19 @@ void print_chat(struct chat *l_chat, char* user){
   }
 }
 
+void print_chatroom(struct user* chatroom){
+  struct user* user = chatroom;
+  while(user!=NULL){
+    printf("-) %s\n", user->username);
+    user = user->next;
+  }
+}
+
 /*
   struct user* è una lista di utenti con i quali sto chattando.
 */
-int chatting_with(char *buffer, struct user * chat_head){
-  struct user * c_user = chat_head;
+int chatting_with(char *buffer, struct user* chatroom){
+  struct user * c_user = chatroom;
   while (c_user!=NULL) {
     //printf("%s\n", buffer);
     //printf("%s\n", c_user->username);

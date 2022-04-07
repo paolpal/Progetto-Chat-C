@@ -78,7 +78,7 @@ int main(int argc, char const *argv[]) {
         else if(i == fileno(stdin)){
           scanf("%s", buffer);
           if(strcmp(buffer,"list")==0) display_list(registro);
-          else if(strcmp(buffer,"msg")==0)prind_all_hanging_msg(destinatari);
+          else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(destinatari);
           else if(strcmp(buffer,"help")==0){} //display_help_mesage();
           else if(strcmp(buffer,"esc")==0){
             status = OFF;

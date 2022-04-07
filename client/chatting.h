@@ -15,5 +15,6 @@ void stampa_messaggio(struct msg *messaggio);
 int chatting_with(char *buffer,struct user * chat_head);
 void print_chat(struct chat *l_chat, char* user);
 void add_chat(struct chat **l_chat, char* user);
+void print_chatroom(struct user* chatroom);
 
 #endif

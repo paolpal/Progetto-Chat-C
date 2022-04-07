@@ -38,6 +38,7 @@ struct chat{ // chat - mittente
 struct user{
   char* username;
   int cht_sd;
+  struct sockaddr_in addr;
   struct user* next;
 };
 
