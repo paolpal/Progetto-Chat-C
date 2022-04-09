@@ -18,11 +18,11 @@ int login_check(char *user, char *pw);
 int username_used(char *user);
 int signup(char *user, char *pw);
 int present(struct user_data** head_ref, char *username);
-void reset_timestamp(struct user_data** head_ref, char *username);
-void push_registro(struct user_data** head_ref, char *username, short port);
+void update_register(struct user_data** head_ref, char *username, short port, int sd);
+void push_registro(struct user_data** head_ref, char *username, short port, int sd);
 void delete_list(struct user_data** head_ref);
 void display_list(struct user_data* head);
-int login(struct user_data** head_ref, char *user, char *pw, short port);
+int login(struct user_data** head_ref, char *user, char *pw, short port, int sd);
 int logout(struct user_data** head_ref, char *user);
 int find_port(struct user_data** head_ref, char *username);
 struct hanging_msg** append_dest(struct destinatario** head_ref, char* username);
@@ -33,5 +33,8 @@ void find_sender(struct hanging_msg* msg_head, struct sender** sender_head_ref);
 void add_one_msg(struct sender** sender_head_ref, char* username);
 void append_sender(struct sender** sender_head_ref, char* username);
 struct hanging_msg* remove_msg(struct hanging_msg** l_msg_ref, char* sender);
+void delete_by_socket(struct user_data** head_ref, int sd);
+char* find_user_by_socket(struct user_data** head_ref, int sd);
+void find_last_timestamp(time_t** timestamp, struct hanging_msg* l_msg, char* username);
 
 #endif

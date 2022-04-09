@@ -1,0 +1,29 @@
+TODO
+
+- ACK messaggi
+  Richiesta di ACK
+  Ricevo 1 nome e 1 numero(?)
+
+- cercare il CRASH della chat
+
+- aggiungi condizione di NOT_LOGGED
+  comandi disponibili in e signup
+
+- RUBRICA elenco di nomi disponibili per chattare.
+  stampo la rubrica se digito chat senza un nome?
+  (non complichiamoci la vita)
+
+- scrivi i messaggi di HELP
+  (avvio client, avvio server)
+
+- implementa modalità VERBOSE
+
+************************************ FATTO  ************************************
+
+- gestione delle DISCONNSESSIONI INASPETTATE (FATTO)
+  risulti online ma non lo sei più
+
+- ricevi il TIMESTAMP del messaggio più recente HANGING
+  sul server c'è il timestamp dell'ultimo messaggio pendente
+
+- LOGIN (cambiare la porta) (FATTO)

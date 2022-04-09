@@ -73,13 +73,15 @@ int find_port(struct user_data** head_ref, char *username){
   return 0;
 }
 
-void reset_timestamp(struct user_data** head_ref, char *username){
+void update_register(struct user_data** head_ref, char *username, short port, int sd){
   struct user_data* current = *head_ref;
   while(current != NULL){
     if(strcmp(current->user_dest, username)==0){
       free(current->timestamp_logout);
       current->timestamp_logout = NULL;
       time(current->timestamp_login);
+      current->port = port;
+      current->sd = sd;
       break;
     }
     current = current->next;
@@ -91,19 +93,13 @@ void reset_timestamp(struct user_data** head_ref, char *username){
 // se sono già loggato (timestamp_logout == NULL) allora non posso loggare un'altra volta (O si?)
 // (Problema della doppia porta, il primo client non riceve più i messaggi)
 //
-// ************************
-// LA PORTA NON VIENE AGGIORNATA
-// LA PORTA NON VIENE AGGIORNATA
-// LA PORTA NON VIENE AGGIORNATA
-// LA PORTA NON VIENE AGGIORNATA
-// LA PORTA NON VIENE AGGIORNATA
-// ************************
-void push_registro(struct user_data** head_ref, char *username, short port){
+void push_registro(struct user_data** head_ref, char *username, short port, int sd){
   if(!present(head_ref, username)){
     struct user_data* new_node = (struct user_data*) malloc(sizeof(struct user_data));
     new_node->user_dest = (char*) malloc(sizeof(char)*(strlen(username)+1));
     strcpy(new_node->user_dest,username);
     new_node->port = port;
+    new_node->sd = sd;
     new_node->next = (*head_ref);
     new_node->timestamp_login = (time_t*) malloc(sizeof(time_t));
     time(new_node->timestamp_login);
@@ -113,7 +109,8 @@ void push_registro(struct user_data** head_ref, char *username, short port){
     (*head_ref) = new_node;
   }
   // ALTRIMENTI RESETTO I TIMESTAMP
-  reset_timestamp(head_ref, username);
+  //reset_timestamp(head_ref, username);
+  update_register(head_ref, username, port, sd);
 }
 
 void delete_list(struct user_data** head_ref) {
@@ -129,6 +126,32 @@ void delete_list(struct user_data** head_ref) {
   }
   *head_ref = NULL;
 }
+
+void delete_by_socket(struct user_data** head_ref, int sd){
+  struct user_data* user = *head_ref, *prev;
+  if(user != NULL && user->sd == sd) {
+    *head_ref = user->next;
+    free(user);
+    return;
+  }
+  while(user != NULL && user->sd != sd) {
+    prev = user;
+    user = user->next;
+  }
+  if(user == NULL) return;
+  prev->next = user->next;
+  free(user);
+}
+
+char* find_user_by_socket(struct user_data** head_ref, int sd){
+  struct user_data* user = *head_ref;
+  while(user!=NULL){
+    if(user->sd == sd) return user->user_dest;
+    user = user->next;
+  }
+  return NULL;
+}
+
 
 /*
 void display_list(struct user_data* head) {
@@ -156,9 +179,9 @@ void display_list(struct user_data* head) {
   return;
 }
 
-int login(struct user_data** head_ref, char *user, char *pw, short port){
+int login(struct user_data** head_ref, char *user, char *pw, short port, int sd){
   if(login_check(user, pw)){
-    push_registro(head_ref, user, port);
+    push_registro(head_ref, user, port, sd);
     return 1;
   }
   return 0;
@@ -190,7 +213,7 @@ struct hanging_msg** append_dest(struct destinatario** head_ref, char* username)
   struct destinatario* new_node = (struct destinatario*) malloc(sizeof(struct destinatario));
   new_node->destinatario = (char*) malloc(sizeof(char)*(strlen(username)+1));
   strcpy(new_node->destinatario, username);
-  new_node->timestamp = NULL;
+  //new_node->timestamp = NULL;
   new_node->messaggi = NULL;
   new_node->next = (*head_ref);
   (*head_ref) = new_node;
@@ -203,6 +226,8 @@ void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user,
     new_msg->msg = msg;
     new_msg->send = send_user;
     new_msg->dest = dest_user;
+    new_msg->timestamp = (time_t*)malloc(sizeof(time_t));
+    time(new_msg->timestamp);
     new_msg->next = *head_ref;
     *head_ref = new_msg;
   }
@@ -269,4 +294,12 @@ struct hanging_msg* remove_msg(struct hanging_msg** l_msg_ref, char* sender){
   }
   if (c_msg != NULL) prev->next = c_msg->next;
   return c_msg;
+}
+
+void find_last_timestamp(time_t** timestamp, struct hanging_msg* l_msg, char* username){
+  struct hanging_msg* c_msg = l_msg;
+  while(c_msg!=NULL){
+    if(strcmp(c_msg->send, username)==0) *timestamp = c_msg->timestamp;
+    c_msg = c_msg->next;
+  }
 }

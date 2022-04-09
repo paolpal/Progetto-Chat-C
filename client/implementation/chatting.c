@@ -44,8 +44,8 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   //printf("Hai iniziato una chat con %s\n", dest_user);
 
   while(chatting){
-    printf("\r> ");
-    fflush(stdout);
+    //printf("\r> ");
+    //fflush(stdout);
     read_fds = master;
     select(fdmax+1, &read_fds, NULL, NULL, NULL);
     for(i=0; i<=fdmax; i++){
@@ -55,29 +55,33 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           // CHK : ricevo un nome e rispondo 1 se sto chattando, 0 se non sto chattando con lui
           read(p_father_sd, buffer, REQ_LEN);
           if(strcmp(buffer,"CHK")==0){
-            read(p_father_sd, buffer, BUF_LEN);
+            read(p_father_sd, &len, sizeof(uint32_t));
+            read(p_father_sd, buffer, len);
+            //read(p_father_sd, buffer, BUF_LEN);
             if(chatting_with(buffer, chatroom)) {
-              write(p_son_sd,"1\0", strlen("1")+1);
+              write(p_son_sd,"1\0", 2);
             }
             else {
-              write(p_son_sd,"0\0",strlen("0")+1);
+              write(p_son_sd,"0\0", 2);
             }
           }
           else if(strcmp(buffer,"ADD")==0){
-            read(p_father_sd, buffer, BUF_LEN);
+            read(p_father_sd, &len, sizeof(uint32_t));
+            read(p_father_sd, buffer, len);
             //printf("%s %d\n", buffer, (int)strlen(buffer));
             if(strcmp(my_user, buffer)!=0)
               append_user(&chatroom, buffer);
           }
           else if(strcmp(buffer,"BEY")==0){
-            read(p_father_sd, buffer, BUF_LEN);
+            read(p_father_sd, &len, sizeof(uint32_t));
+            read(p_father_sd, buffer, len);
             //printf("%s %d\n", buffer, (int)strlen(buffer));
             remove_user(&chatroom, buffer);
           }
           else if(strcmp(buffer,"JNG")==0){
-            //read(p_father_sd, &len, sizeof(uint32_t));
-            //read(p_father_sd, buffer, len);
-            read(p_father_sd, buffer, BUF_LEN);
+            read(p_father_sd, &len, sizeof(uint32_t));
+            read(p_father_sd, buffer, len);
+            //read(p_father_sd, buffer, BUF_LEN);
             //printf("%s %d\n", buffer, (int)strlen(buffer));
             if(chatting_with(buffer, chatroom)){
               send_chatroom_mp(p_son_sd, chatroom);
@@ -90,8 +94,8 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           fgets(buffer, BUF_LEN, stdin);
           strncpy(cmd, buffer, 5);
           strncpy(sh_cmd, buffer, 2);
-          cmd[5]='\0';
-          sh_cmd[2]='\0';
+          cmd[5] = '\0';
+          sh_cmd[2] = '\0';
           if(strcmp(sh_cmd,"\\q")==0){
             chatting=0;
             user = chatroom;
@@ -117,7 +121,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
             strtok(buffer, " ");
             username = strtok(NULL, "\n");
             //username = strtok(username, "\n");
-            printf("%s %d\n", username, (int)strlen(username));
+            //printf("%s %d\n", username, (int)strlen(username));
             user = chatroom;
             while(user!=NULL){
               if(user->cht_sd != 0){
@@ -165,25 +169,18 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
       }
     }
   }
-  write(p_son_sd,"END", strlen("END")+1);
+  sprintf(buffer, "END");
+  write(p_son_sd, buffer, REQ_LEN);
   //if(cht_sd != 0) close(cht_sd);
 }
 
-/*
-  Ritorna INT
-  1 - messaggio recapitato
-  0 - messaggio NON recapitato
-
-  Serve che riceva una risposta, ACK in caso di consegna, NACK altrimenti.
-  Va modificato il protocollo.
-*/
 void send_msg(int cht_sd, char* my_user, char* msg){
   int len, ret;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   //INVIO LA RICHIESTA DI MESSAGGIO
-  sprintf(buffer,"%s", "MSG");
+  sprintf(buffer, "MSG");
   ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL MITTENTE
@@ -207,6 +204,7 @@ void send_msg(int cht_sd, char* my_user, char* msg){
 
 void recv_msg(int cht_sd, int p_father_sd, int p_son_sd, int chatting, struct chat** ricevuti, char* buffer){
   uint16_t lmsg;
+  uint32_t len_t;
   int len;
   struct msg* messaggio = (struct msg*) malloc(sizeof(struct msg));
 
@@ -241,12 +239,14 @@ void recv_msg(int cht_sd, int p_father_sd, int p_son_sd, int chatting, struct ch
     //printf("Chiedo se sta chattando con USER\n");
     sprintf(buffer, "CHK");
     write(p_father_sd, buffer, REQ_LEN);
-    write(p_father_sd, messaggio->sender, strlen(messaggio->sender)+1);
+    len_t = strlen(messaggio->sender)+1;
+    write(p_father_sd, &len_t, sizeof(uint32_t));
+    write(p_father_sd, messaggio->sender, len_t);
     //printf("Attendo la risposta\n");
     //p_read_all(p_son_sd, buffer, sizeof(buffer));
-    read(p_son_sd, buffer, sizeof(buffer));
+    read(p_son_sd, buffer, 2);
     //printf("Ho ricevuto la risposta : %s\n", buffer);
-    if(strcmp(buffer,"1")==0)
+    if(strcmp(buffer, "1")==0)
       stampa_messaggio(messaggio);
   }
   accoda_messaggio(ricevuti, messaggio);

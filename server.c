@@ -90,6 +90,8 @@ int main(int argc, char const *argv[]) {
           if(ret==0){
             printf("Client Disconnesso\n");
             fflush(stdout);
+            //delete_by_socket(&registro, i);
+            logout(&registro, find_user_by_socket(&registro,i));
             close(i);
             FD_CLR(i, &master);
             break;

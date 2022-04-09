@@ -75,7 +75,7 @@ void login_protocol(int i, struct user_data** utenti, char* buffer){
   port = ntohs(lmsg);
   //printf("Porta ricevuta %d\n", port);
 
-  if(login(utenti, username, password, port)){
+  if(login(utenti, username, password, port, i)){
     sprintf(buffer, "%s", "LOGGED");
   }
   else{
@@ -168,6 +168,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
     struct hanging_msg** msg_list_ref;
     msg_list_ref = find_pending_msg(destinatari, dest);
     append_msg(msg_list_ref, dest, send, msg);
+    //new_pending_msg(destinatari, dest);
   }
 
   //rispondo sempre con la porta: se non l'ho trovata contiene ZERO
@@ -233,6 +234,7 @@ void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
   char *dest;
   uint16_t lmsg;
   int len, ret;
+  time_t *timestamp = NULL;
 
   struct sender* l_sender = NULL;
   struct sender* c_sender = NULL;
@@ -270,10 +272,24 @@ void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
     sprintf(buffer,"%s", c_sender->username);
     ret = send_all(i, (void*) buffer, len, 0);
 
-    //INVIO LA IL NUMERO DI MESSAGGI DEL MITTENTE
+    //INVIO IL NUMERO DI MESSAGGI DEL MITTENTE
     lmsg = htons(c_sender->n_msg);
     //printf("LUNGHEZZA username : %d (%d)\n", len, (int)lmsg);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+
+    //sprintf(buffer,"%s",ctime(c_sender->timestamp));
+    //CERCA IL TIMESTAMP PIU' RECENTE
+    printf("CERCO IL TIMESTAMP PIU' RECENTE");
+    find_last_timestamp(&timestamp, *l_msg_ref, c_sender->username);
+    printf("trovato: %s", ctime(timestamp));
+    sprintf(buffer,"%s", ctime(timestamp));
+    //INVIO LA LUNGHEZZA DEL TIMESTAMP
+    len = strlen(buffer)+1;
+    lmsg = htons(len);
+    ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+
+    // INVIO IL TIMESTAMP
+    ret = send_all(i, (void*) buffer, len, 0);
 
     c_sender = c_sender->next;
   }

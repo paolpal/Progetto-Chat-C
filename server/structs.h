@@ -4,6 +4,7 @@
 struct user_data{
   char *user_dest;
   short port;
+  int sd;
   time_t* timestamp_login;
   time_t* timestamp_logout;
 
@@ -26,14 +27,14 @@ struct hanging_msg{
   char *msg;
   char *send;
   char *dest;
-  //time_t *timestamp;
+  time_t *timestamp;
   struct hanging_msg *next;
 };
 
 struct destinatario{
   char *destinatario;
   //int quanti;
-  time_t *timestamp;
+  //time_t *timestamp;
   struct hanging_msg *messaggi;
   struct destinatario *next;
 };

@@ -89,8 +89,8 @@ int main(int argc, char const *argv[]) {
   }*/
 
   while (1) {
-    if(!chatting) printf("\r<menu> ");
-    fflush(stdout);
+    //if(!chatting) printf("\r<menu> ");
+    //fflush(stdout);
     read_fds = master;
     select(fdmax+1, &read_fds, NULL, NULL, NULL);
     for(i=0; i<=fdmax; i++){
@@ -113,7 +113,7 @@ int main(int argc, char const *argv[]) {
             dest = strtok(buffer,":");
             msg_text = &buffer[strlen(dest)+1];
             msg = create_my_msg(dest, msg_text);
-            stampa_messaggio(msg);
+            //stampa_messaggio(msg);
             accoda_messaggio(&l_chat, msg);
           }
           else{
