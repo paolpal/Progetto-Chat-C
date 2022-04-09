@@ -178,7 +178,8 @@ int main(int argc, char const *argv[]) {
               close(srv_sd);
             }
           }
-          // il processo principale smette di scoltare sullo STDIN finche il processo di trasmissione noon termina
+          // il processo principale smette di scoltare sullo STDIN
+          // finche il processo di trasmissione non termina
           // la notifica avviene tramite la chiusura della pipe
           else if(strcmp(command,"chat")==0 && (nump == 1)){
             //printf("RICHIESTA DI CHAT\n");
@@ -236,12 +237,20 @@ int main(int argc, char const *argv[]) {
             recv_msg(i, p_father_sd[1], p_son_sd[0], chatting, &l_chat, buffer);
           }
           else if(strcmp(buffer, "ADD")==0){
-            //printf("RICEZIONE FILE\n");
+            printf("RICHIESTA AGGIUNTA\n");
             add_user_protocol_client(i, p_father_sd[1]);
           }
           else if(strcmp(buffer, "SHR")==0){
             //printf("RICEZIONE FILE\n");
             receive_file_protocol_client(i);
+          }
+          else if(strcmp(buffer, "BEY")==0){
+            printf("RICHIESTA DI USCITA\n");
+            leave_chatroom_protocol_client(i, p_father_sd[1]);
+          }
+          else if(strcmp(buffer, "JNG")==0){
+            printf("RICHIESTA DI ENTRATA\n");
+            join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0]);
           }
         }
       }

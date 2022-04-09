@@ -14,5 +14,9 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename);
 void group_protocol_client(int sd);
 void add_user_request_protocol_client(int cht_sd, char* username);
 void add_user_protocol_client(int sd, int p_father_sd);
+void leave_chatroom_request_protocol_client(int cht_sd, char* my_username);
+void leave_chatroom_protocol_client(int sd, int p_father_sd);
+void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct user** chatroom_ref);
+void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd);
 
 #endif

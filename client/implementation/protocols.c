@@ -460,7 +460,135 @@ void add_user_protocol_client(int sd, int p_father_sd){
 
   //AGGIUNGO L'UTENTE AL CHATTING PROCESS
   sprintf(buffer, "ADD");
-  write(p_father_sd, buffer, strlen(buffer)+1);
+  write(p_father_sd, buffer, REQ_LEN);
   sprintf(buffer, "%s", username);
   write(p_father_sd, buffer, strlen(buffer)+1);
+}
+
+void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
+  int len, ret;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+
+  //INVIO LA RICHIESTA DI USCITA
+  sprintf(buffer,"%s", "BEY");
+  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DELLO USERNAME
+  len = strlen(my_username)+1;
+  lmsg = htons(len);
+  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+
+  //INVIO LO USERNAME
+  sprintf(buffer,"%s", my_username);
+  ret = send(cht_sd, (void*) buffer, len, 0);
+}
+
+void leave_chatroom_protocol_client(int sd, int p_father_sd){
+  int ret, len;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+  char *username;
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
+  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  username = (char*) malloc(len*sizeof(char));
+
+  //RICEVO LO USERNAME
+  ret = recv_all(sd, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", username);
+
+  //RIMUOVO L'UTENTE DAL CHATTING PROCESS
+  sprintf(buffer, "BEY");
+  write(p_father_sd, buffer, REQ_LEN);
+  sprintf(buffer, "%s", username);
+  write(p_father_sd, buffer, strlen(buffer)+1);
+}
+
+void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct user** chatroom_ref){
+  int len, ret;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+  char* username;
+
+  //INVIO LA RICHIESTA DI UNIONE
+  sprintf(buffer,"%s", "JNG");
+  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DEL MIO USERNAME
+  len = strlen(my_username)+1;
+  lmsg = htons(len);
+  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+
+  //INVIO IL MIO USERNAME
+  sprintf(buffer,"%s", my_username);
+  ret = send(cht_sd, (void*) buffer, len, 0);
+
+  // ASPETTO LA LISTA DI UTENTI DA AGGIUNGERE ALLA CHATROOM
+  //printf("Aspetto la lista di utenti.\n");
+  while(1){
+    //RICEVO LA LUNGHEZZA DELLO USERNAME
+    recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
+    len = ntohs(lmsg);
+    if(len == 0) break;
+    username = (char*) malloc(len*sizeof(char));
+
+    //RICEVO LO USERNAME
+    recv_all(cht_sd, (void*)buffer, len, 0);
+    strcpy(username, buffer);
+
+    //printf("%s\n",username);
+
+    // LO AGGIUNGO ALLA CHATROOM
+    if(strcmp(username, my_username)!=0)
+      append_user(chatroom_ref, username);
+  }
+}
+
+void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd){
+  int ret;
+  uint16_t lmsg;
+  uint32_t len;
+  char buffer[BUF_LEN];
+  char *username;//, *c_user;
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
+  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  username = (char*) malloc(len*sizeof(char));
+
+  //RICEVO LO USERNAME
+  ret = recv_all(sd, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", username);
+
+  //printf("Valuto se accettare o meno.\n");
+
+  //VALUTO SE LO USERNAME E' NELLA CHATROOM
+  sprintf(buffer, "JNG");
+  write(p_father_sd, buffer, REQ_LEN);
+  sprintf(buffer, "%s", username);
+  // len = strlen(buffer)+1;
+  // write(p_father_sd, &len, sizeof(uint32_t));
+  write(p_father_sd, buffer, strlen(buffer)+1);
+
+  //INOLTRO UNA LISTA DI USERNAME (MANDO 0 PER CHIUDERE)
+  while(1){
+    // RICEVO LA LUNGHEZZA DAL CHATTING PROTOCOL
+    // E LA INOLTRO TRAMITE SOCKET
+    ret = read(p_son_sd, &len, sizeof(len));
+    if(len == 0) break;
+
+    // RICEVO LA LO USERNAME DAL CHATTING PROTOCOL
+    // E LA INOLTRO TRAMITE SOCKET
+    ret = read(p_son_sd, buffer, len);
+    lmsg = htons(len);
+    ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+    ret = send_all(sd, (void*) buffer, len, 0);
+
+    //printf("Invio: %s\n", buffer);
+  }
+  //printf("Invio 0 peer terminare\n");
+  lmsg = htons(0);
+  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
 }

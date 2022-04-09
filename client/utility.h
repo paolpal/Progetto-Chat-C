@@ -16,5 +16,9 @@
 struct user* append_user(struct user** head_ref, char* username);
 ssize_t p_read_all(int fd, char* buffer, int b_size);
 struct msg* create_my_msg(char* dest, char* text);
+void print_chatroom(struct user* chatroom);
+int chatting_with(char *buffer,struct user * chat_head);
+void remove_user(struct user** chatroom, char* username);
+void send_chatroom_mp(int p_son_sd, struct user* chatroom);
 
 #endif
