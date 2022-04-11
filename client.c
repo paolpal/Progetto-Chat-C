@@ -45,6 +45,9 @@ int main(int argc, char const *argv[]) {
 
   int fdmax;
   int chatting = 0;
+  int logged = 0;
+
+  uint32_t len;
 
   if(argc<2){
     printf("Per avviare l'applicazione dichiara la porta su cui ricevere i messaggi.\nUtilizzo: ./dev <port>\n");
@@ -109,9 +112,27 @@ int main(int argc, char const *argv[]) {
           read(p_son_sd[0], buffer, REQ_LEN);
           if(strcmp(buffer,"MSG")==0){
             //printf("Sto archiviando i miei messaggi\n");
-            read(p_son_sd[0], buffer, BUF_LEN);
-            dest = strtok(buffer,":");
-            msg_text = &buffer[strlen(dest)+1];
+            // ***********************
+            // RICEVO I DATI CORRETTAMENTE
+            // ***********************
+
+            // RICEVO LA LUNGHEZZA DELLO USERNAME
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            dest = (char*)malloc(len*sizeof(char));
+            // RICEVO LO USERNAME
+            read(p_son_sd[0], buffer, len);
+            strcpy(dest,buffer);
+            // RICEVO LA LUNGHEZZA DEL MESSAGGIO
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            // RICEVO IL MESSAGGIO
+            read(p_son_sd[0], buffer, len);
+            msg_text = buffer;
+            // RICEVO IL NUMERO DI SEQUENZA
+            // --- read(p_son_sd[0], &len, sizeof(uint32_t));
+
+            //read(p_son_sd[0], buffer, BUF_LEN);
+            //dest = strtok(buffer,":");
+            //msg_text = &buffer[strlen(dest)+1];
             msg = create_my_msg(dest, msg_text);
             //stampa_messaggio(msg);
             accoda_messaggio(&l_chat, msg);
@@ -133,7 +154,7 @@ int main(int argc, char const *argv[]) {
           nump = parametrs_num(buffer);
           command = strtok(buffer," ");
           //printf("%s %d %lu\n", command, nump, strlen(command));
-          if(strcmp(command,"signup")==0 && (nump == 3)){
+          if(!logged && strcmp(command,"signup")==0 && (nump == 3)){
             //printf("RICHIESTA DI SIGNUP\n");
             //scanf("%s %s", username, password);
             //fgets(buffer,BUF_LEN,stdin);
@@ -151,9 +172,10 @@ int main(int argc, char const *argv[]) {
             //free(password);
             close(srv_sd);
           }
-          else if(strcmp(command,"in")==0 && (nump == 3)){
+          else if(!logged && strcmp(command,"in")==0 && (nump == 3)){
             //printf("RICHIESTA DI LOGIN\n");
             //fgets(buffer,BUF_LEN,stdin);
+            logged = 1;
             number = strtok(NULL, " ");
             srv_port = atoi(number);
             token = strtok(NULL, " ");
@@ -169,8 +191,9 @@ int main(int argc, char const *argv[]) {
               printf("Login avvenuto con successo!\n");
             }
           }
-          else if(strcmp(command,"out")==0 && (nump == 0)){
+          else if(logged && strcmp(command,"out")==0 && (nump == 0)){
             printf("RICHIESTA DI LOGOUT\n");
+            logged = 0;
             //printf("CHECK CORRETTO\n");
             //printf("%s\n", username);
             if(logout_protocol_client(srv_sd, username)){
@@ -181,7 +204,7 @@ int main(int argc, char const *argv[]) {
           // il processo principale smette di scoltare sullo STDIN
           // finche il processo di trasmissione non termina
           // la notifica avviene tramite la chiusura della pipe
-          else if(strcmp(command,"chat")==0 && (nump == 1)){
+          else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
             //printf("RICHIESTA DI CHAT\n");
             //scanf("%s", dest);
             dest = strtok(NULL, " ");
@@ -206,16 +229,16 @@ int main(int argc, char const *argv[]) {
             close(p_son_sd[1]);
             close(p_father_sd[0]);
           }
-          else if(strcmp(command,"hanging")==0 && (nump == 0)){
+          else if(logged && strcmp(command,"hanging")==0 && (nump == 0)){
             //printf("RICHIESTA DI HANGING\n");
             hanging_protocol_client(srv_sd, username);
           }
-          else if(strcmp(command,"show")==0 && (nump == 1)){
+          else if(logged && strcmp(command,"show")==0 && (nump == 1)){
             //printf("RICHIESTA DI SHOW\n");
             sender = strtok(NULL, " ");
             show_protocol_client(srv_sd, username, sender, &l_chat);
           }
-          else if(strcmp(command,"bey")==0){
+          else if(!logged && strcmp(command,"esc")==0){
             printf("Arrivederci\n");
             close(listener);
             exit(0);

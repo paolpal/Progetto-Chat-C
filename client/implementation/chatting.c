@@ -159,8 +159,24 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
               sprintf(buffer, "MSG");
               write(p_son_sd, buffer, REQ_LEN);
               //printf("****** DEBUG 2 ******\n");
-              sprintf(buffer, "%s:%s", user->username, msg);
-              write(p_son_sd, buffer, strlen(buffer)+1);
+              // SIGNORE E SIGNORI ECCO IL BUG
+
+              // MANDO LA LUNGHEZZA DELLO USERNAME
+              len = strlen(user->username)+1;
+              write(p_son_sd, &len, sizeof(uint32_t));
+              // MANDO LO USERNAME
+              write(p_son_sd, user->username, len);
+              // MANDO LA LUNGHEZZA DEL MESSAGGIO
+              len = strlen(msg)+1;
+              write(p_son_sd, &len, sizeof(uint32_t));
+              // MANDO IL MESSAGGIO
+              write(p_son_sd, msg, len);
+              // MANDO IL NUMERO DI SEQUENZA
+              // --- len = NUMERO SEQUENZA;
+              // --- write(p_son_sd, &len, sizeof(uint32_t));
+
+              //sprintf(buffer, "%s:%s", user->username, msg);
+              //write(p_son_sd, buffer, strlen(buffer)+1);
               //printf("****** DEBUG 3 ******\n");
               user = user->next;
             }

@@ -1,13 +1,10 @@
 TODO
 
-- ACK messaggi
+- implementa modalità VERBOSE
+
+- ACK messaggi (DA FARE ASSOLUTAMENTE)
   Richiesta di ACK
   Ricevo 1 nome e 1 numero(?)
-
-- cercare il CRASH della chat
-
-- aggiungi condizione di NOT_LOGGED
-  comandi disponibili in e signup
 
 - RUBRICA elenco di nomi disponibili per chattare.
   stampo la rubrica se digito chat senza un nome?
@@ -15,8 +12,6 @@ TODO
 
 - scrivi i messaggi di HELP
   (avvio client, avvio server)
-
-- implementa modalità VERBOSE
 
 ************************************ FATTO  ************************************
 
@@ -27,3 +22,8 @@ TODO
   sul server c'è il timestamp dell'ultimo messaggio pendente
 
 - LOGIN (cambiare la porta) (FATTO)
+
+- aggiungi condizione di NOT_LOGGED
+  comandi disponibili in e signup
+
+- cercare il CRASH della chat (Sta nel messaggio normale, MSG sulla pipe)
