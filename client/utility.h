@@ -20,5 +20,6 @@ void print_chatroom(struct user* chatroom);
 int chatting_with(char *buffer,struct user * chat_head);
 void remove_user(struct user** chatroom, char* username);
 void send_chatroom_mp(int p_son_sd, struct user* chatroom);
+void display_help_message();
 
 #endif

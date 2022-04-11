@@ -19,7 +19,6 @@ struct user* append_user(struct user** chatroom, char* username){
 }
 
 void remove_user(struct user** chatroom, char* username){
-  //int len;
   struct user* user = *chatroom, *prev;
   if(user != NULL && strcmp(user->username,username)==0) {
     *chatroom = user->next;
@@ -49,8 +48,6 @@ void print_chatroom(struct user* chatroom){
 int chatting_with(char *buffer, struct user* chatroom){
   struct user * c_user = chatroom;
   while (c_user!=NULL) {
-    //printf("%s\n", buffer);
-    //printf("%s\n", c_user->username);
     if(strcmp(c_user->username, buffer)==0) return 1;
     c_user= c_user->next;
   }
@@ -87,4 +84,17 @@ void send_chatroom_mp(int p_son_sd, struct user* chatroom){
   }
   len = 0;
   write(p_son_sd, &len, sizeof(len));
+}
+
+void display_help_message(){
+  printf("Digita un comando: \n\n");
+  printf("1) signup porta username password --> crea un account sul server\n");
+  printf("2) in porta username password --> accede ad un account sul server\n");
+  printf("3) hanging --> ricevo una lista degli utenti che mi hanno contattato\n");
+  printf("4) show username --> ricevo i messaggi pendenti mandati da *username*\n");
+  printf("5) chat username --> apro una chat con *username*\n");
+  printf("6) share filename --> invio il file agli utenti con cui sto chattando\n");
+  printf("7) out --> eseguo una disconnessione dal server\n");
+  printf("8) esc --> termino l'applicazione\n");
+  printf("8) help --> mostro il messaggio di aiuto\n");
 }

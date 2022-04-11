@@ -75,7 +75,6 @@ void recv_file_b(int sd, char* filename){
 
     len = ntohs(lmsg);
     ret = recv_all(sd, buffer, len, 0);
-    //printf("%lu\n", sizeof(buffer));
     fwrite(buffer, sizeof(char), len, fp);
     bzero(buffer, BUF_LEN);
   }
@@ -98,7 +97,6 @@ void send_file_b(char* filename, int sd){
   }
   while(!feof(fp)){
     r_byte = fread(data, sizeof(char), BUF_LEN, fp);
-    //printf("%d %lu\n", n, sizeof(data));
     lmsg = htons(r_byte);
     ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
 

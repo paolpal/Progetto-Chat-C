@@ -91,6 +91,7 @@ int main(int argc, char const *argv[]) {
     exit(-1);
   }*/
 
+  display_help_message();
   while (1) {
     //if(!chatting) printf("\r<menu> ");
     //fflush(stdout);
@@ -183,6 +184,7 @@ int main(int argc, char const *argv[]) {
             username = malloc((strlen(token)+1)*sizeof(char));
             sprintf(username,"%s",token);
             //sprintf(token,"%s",username);
+            printf("<LOG> Apro una connessione TCP con il SERVER\n");
             srv_addr.sin_port = htons(srv_port);
             srv_sd = socket(AF_INET, SOCK_STREAM, 0);
             ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
@@ -201,6 +203,7 @@ int main(int argc, char const *argv[]) {
               close(srv_sd);
             }
           }
+          else if(strcmp(command,"help")==0) display_help_message();
           // il processo principale smette di scoltare sullo STDIN
           // finche il processo di trasmissione non termina
           // la notifica avviene tramite la chiusura della pipe
@@ -255,24 +258,23 @@ int main(int argc, char const *argv[]) {
             break;
           }
           if(strcmp(buffer, "MSG")==0){
-            //printf("Messaggio ricevuto\n");
-            //printf("RICHIESTA DI MESSAGGIO\n");
+            printf("<LOG-M> Ricevo richiesta di MESSAGE\n");
             recv_msg(i, p_father_sd[1], p_son_sd[0], chatting, &l_chat, buffer);
           }
           else if(strcmp(buffer, "ADD")==0){
-            printf("RICHIESTA AGGIUNTA\n");
+            printf("<LOG-M> Ricevo richiesta di ADD USER\n");
             add_user_protocol_client(i, p_father_sd[1]);
           }
           else if(strcmp(buffer, "SHR")==0){
-            //printf("RICEZIONE FILE\n");
+            printf("<LOG-M> Ricevo richiesta di SHARE FILE\n");
             receive_file_protocol_client(i);
           }
           else if(strcmp(buffer, "BEY")==0){
-            printf("RICHIESTA DI USCITA\n");
+            printf("<LOG-M> Ricevo richiesta di LEAVE\n");
             leave_chatroom_protocol_client(i, p_father_sd[1]);
           }
           else if(strcmp(buffer, "JNG")==0){
-            printf("RICHIESTA DI ENTRATA\n");
+            printf("<LOG-M> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
             join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0]);
           }
         }

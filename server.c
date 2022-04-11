@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
   fdmax = listener;
 
   printf("********************** SERVER AVVIATO **********************\n");
-
+  display_help_message();
   while(status == ON){
     read_fds = master;
     select(fdmax+1, &read_fds, NULL, NULL, NULL);
@@ -79,7 +79,7 @@ int main(int argc, char const *argv[]) {
           scanf("%s", buffer);
           if(strcmp(buffer,"list")==0) display_list(registro);
           else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(destinatari);
-          else if(strcmp(buffer,"help")==0){} //display_help_mesage();
+          else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
             status = OFF;
           } // procedura di shutdown: chiudi socket e tutto

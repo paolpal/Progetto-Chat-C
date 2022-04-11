@@ -14,6 +14,7 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
+void display_help_message();
 int login_check(char *user, char *pw);
 int username_used(char *user);
 int signup(char *user, char *pw);

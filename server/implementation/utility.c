@@ -303,3 +303,10 @@ void find_last_timestamp(time_t** timestamp, struct hanging_msg* l_msg, char* us
     c_msg = c_msg->next;
   }
 }
+
+void display_help_message(){
+  printf("Digita un comando: \n\n");
+  printf("1) help --> mostra i dettagli dei comandi\n");
+  printf("2) list --> mostra un elenco degli utenti connsessi\n");
+  printf("3) esc  --> chiude il server\n");
+}

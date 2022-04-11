@@ -1,21 +1,20 @@
 TODO
 
-- implementa modalità VERBOSE
-
 - ACK messaggi (DA FARE ASSOLUTAMENTE)
   Richiesta di ACK
   Ricevo 1 nome e 1 numero(?)
 
 - RUBRICA elenco di nomi disponibili per chattare.
+  NON SI AVVIA LA CHAT SE NON E' IN RUBRICA IL NOME
   stampo la rubrica se digito chat senza un nome?
   (non complichiamoci la vita)
 
-- scrivi i messaggi di HELP
-  (avvio client, avvio server)
+- contattare il server per sapere se un UTENTE e' ONLINE
+  per creare una chat di gruppo gli utenti devono essere ONLINE
 
 ************************************ FATTO  ************************************
 
-- gestione delle DISCONNSESSIONI INASPETTATE (FATTO)
+- gestione delle DISCONNESSIONI INASPETTATE (FATTO)
   risulti online ma non lo sei più
 
 - ricevi il TIMESTAMP del messaggio più recente HANGING
@@ -27,3 +26,8 @@ TODO
   comandi disponibili in e signup
 
 - cercare il CRASH della chat (Sta nel messaggio normale, MSG sulla pipe)
+
+- implementa modalità VERBOSE
+
+- scrivi i messaggi di HELP
+  (avvio client, avvio server)
