@@ -17,7 +17,7 @@ int login_check(char *user, char *pw){
   if((login_file = fopen("login.txt","r")) == NULL){
     exit(1);
   }
-  while(fscanf(login_file,"%s %s", username, password) != EOF){
+  while(!found && fscanf(login_file,"%s %s", username, password) != EOF){
     if(strcmp(username,user)==0){
       if (strcmp(password,pw)==0)
         found = 1;
@@ -68,6 +68,15 @@ int find_port(struct user_data** head_ref, char *username){
   while(current != NULL){
     if(strcmp(current->user_dest, username)==0 && current->timestamp_logout==NULL) return current->port;
     current = current->next;
+  }
+  return 0;
+}
+
+int is_online(struct user_data** l_user_ref, char *username){
+  struct user_data* c_user = *l_user_ref;
+  while(c_user != NULL){
+    if(strcmp(c_user->user_dest, username)==0 && c_user->timestamp_logout==NULL) return 1;
+    c_user = c_user->next;
   }
   return 0;
 }

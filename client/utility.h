@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "structs.h"
+#include "protocols.h"
 
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
@@ -23,5 +24,7 @@ void send_chatroom_mp(int p_son_sd, struct user* chatroom);
 void display_help_message();
 struct msg* find_msg_list(struct chat **l_chat_ref, char *username);
 void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n);
+int is_in_addr_book(char* username);
+int is_online(int srv_sd, char* username);
 
 #endif

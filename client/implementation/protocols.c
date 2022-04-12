@@ -652,3 +652,33 @@ void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
   //APPLICO L'ACK AL MESSAGGIO
   acknoledge_message(l_chat_ref, username, seq_n);
 }
+
+// ********************************************************
+// controllo se lo user che voglio contattare è online
+// ********************************************************
+int online_check_protocol_client(int srv_sd, char* username){
+  int ret, len, val;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+
+  // FACCIO RICHIESTA DI CHECK ONLINE
+  sprintf(buffer,"%s", "ONL");
+  printf("<LOG-M> Invio richiesta di CHECK ONLINE\n");
+  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DELLO USERNAME
+  printf("<LOG-M> Invio lo USERNAME\n");
+  len = strlen(username)+1;
+  lmsg = htons(len);
+  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  //INVIO LO USERNAME
+  sprintf(buffer,"%s", username);
+  ret = send_all(srv_sd, (void*) buffer, len, 0);
+
+  //RICEVO LA VALUTAZIONE DAL SERVER
+  printf("<LOG-M> Ricevo la VALUTAZIONE DEL SERVER\n");
+  ret = recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  val = ntohs(lmsg);
+
+  return val;
+}

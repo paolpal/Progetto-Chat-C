@@ -121,3 +121,21 @@ void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
     c_msg = c_msg->next;
   }
 }
+
+int is_in_addr_book(char* username){
+  FILE *addr_book_file = NULL;
+  char c_name[512];
+  int found = 0;
+  if((addr_book_file = fopen("rubrica.txt","r")) == NULL){
+    exit(1);
+  }
+  while(!found && fscanf(addr_book_file,"%s", c_name) != EOF){
+    if(strcmp(c_name, username)==0) found = 1;
+  }
+  fclose(addr_book_file);
+  return found;
+}
+
+int is_online(int srv_sd, char* username){
+  return online_check_protocol_client(srv_sd, username);
+}

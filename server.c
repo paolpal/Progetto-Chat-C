@@ -23,11 +23,6 @@ int main(int argc, char const *argv[]) {
   fd_set master;
   fd_set read_fds;
 
-  //char *user;
-  //char *pw;
-
-  //struct protocol_info *connection = NULL;
-
   int fdmax;
 
   struct sockaddr_in my_addr, cl_addr;
@@ -87,11 +82,9 @@ int main(int argc, char const *argv[]) {
         }
         else{
           ret = recv_all(i, (void*)buffer, REQ_LEN, 0);
-          //printf("%s\n", buffer);
           if(ret==0){
             printf("Client Disconnesso\n");
             fflush(stdout);
-            //delete_by_socket(&registro, i);
             logout(&registro, find_user_by_socket(&registro,i));
             close(i);
             FD_CLR(i, &master);
@@ -128,6 +121,10 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"MAK")==0){
             printf("RICHIESTA DI MESSAGE ACK\n");
             forw_msg_ack_protocol(i, &registro, buffer);
+          }
+          else if(strcmp(buffer,"ONL")==0){
+            printf("RICHIESTA DI ONLINE CHECK\n");
+            online_check_protocol(i, &registro, buffer);
           }
         }
       }

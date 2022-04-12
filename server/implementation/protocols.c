@@ -365,3 +365,24 @@ void forw_msg_ack_protocol(int i, struct user_data** utenti, char* buffer){
   port = find_port(utenti, sender);
   if(port != 0) forward_msg_ack(port, dest, seq_n);
 }
+
+void online_check_protocol(int i, struct user_data** utenti, char* buffer){
+  int len, ret;
+  uint16_t lmsg;
+  char *user;
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
+  ret = recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  user = (char*) malloc(len*sizeof(char));
+  //RICEVO LO USERNAME
+  ret = recv_all(i, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", user);
+
+  //VALUTO SE L'UTENTE E' ONLINE
+  if(is_online(utenti, user)) ret = 1;
+  else ret = 0;
+  lmsg = htons(ret);
+  //INVIO LA VALUTAZIONE
+  ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+}

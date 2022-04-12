@@ -20,5 +20,6 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
 void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd);
 void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int seq_n);
 void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref);
+int online_check_protocol_client(int srv_sd, char* username);
 
 #endif

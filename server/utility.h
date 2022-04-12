@@ -29,6 +29,7 @@ void display_list(struct user_data* head);
 int login(struct user_data** head_ref, char *user, char *pw, short port, int sd);
 int logout(struct user_data** head_ref, char *user);
 int find_port(struct user_data** head_ref, char *username);
+int is_online(struct user_data** head_ref, char *username);
 struct hanging_msg** append_dest(struct destinatario** head_ref, char* username);
 struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* username);
 void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n);

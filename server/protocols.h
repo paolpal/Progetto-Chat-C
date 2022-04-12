@@ -11,5 +11,6 @@ void hanging_protocol(int i, struct destinatario** destinatari, char* buffer);
 void show_protocol(int i, struct destinatario** destinatari, char* buffer);
 void group_protocol(int i, struct user_data** utenti, char* buffer);
 void forw_msg_ack_protocol(int i, struct user_data** utenti, char* buffer);
+void online_check_protocol(int i, struct user_data** utenti, char* buffer);
 
 #endif

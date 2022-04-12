@@ -121,14 +121,17 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           else if(strcmp(sh_cmd,"\\a")==0) {
             strtok(buffer, " ");
             username = strtok(NULL, "\n");
-            user = chatroom;
-            while(user!=NULL){
-              if(user->cht_sd != 0){
-                add_user_request_protocol_client(user->cht_sd, username);
+            if(is_online(srv_sd, username)){
+              user = chatroom;
+              while(user!=NULL){
+                if(user->cht_sd != 0){
+                  add_user_request_protocol_client(user->cht_sd, username);
+                }
+                user = user->next;
               }
-              user = user->next;
+              append_user(&chatroom, username);
             }
-            append_user(&chatroom, username);
+            else printf("Utente non ONLINE\n");
           }
           else if(strcmp(cmd,"share")==0){
             strtok(buffer, " ");

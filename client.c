@@ -209,33 +209,34 @@ int main(int argc, char const *argv[]) {
           else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
             //printf("RICHIESTA DI CHAT\n");
             dest = strtok(NULL, " ");
-            pipe(p_son_sd);
-            pipe(p_father_sd);
-            chatting = 1;
-            print_chat(l_chat, dest);
-            FD_CLR(fileno(stdin), &master);
-            FD_SET(p_son_sd[0], &master);
-            if(p_son_sd[0]>fdmax){
-              fdmax = p_son_sd[0];
-            }
-            pid = fork();
-            if(pid == 0){
-              close(p_son_sd[0]);
-              close(p_father_sd[1]);
-              chat(srv_sd, p_son_sd[1], p_father_sd[0], username, dest);
+            if(is_in_addr_book(dest)){
+              pipe(p_son_sd);
+              pipe(p_father_sd);
+              chatting = 1;
+              print_chat(l_chat, dest);
+              FD_CLR(fileno(stdin), &master);
+              FD_SET(p_son_sd[0], &master);
+              if(p_son_sd[0]>fdmax){
+                fdmax = p_son_sd[0];
+              }
+              pid = fork();
+              if(pid == 0){
+                close(p_son_sd[0]);
+                close(p_father_sd[1]);
+                chat(srv_sd, p_son_sd[1], p_father_sd[0], username, dest);
+                close(p_son_sd[1]);
+                close(p_father_sd[0]);
+                exit(1);
+              }
               close(p_son_sd[1]);
               close(p_father_sd[0]);
-              exit(1);
             }
-            close(p_son_sd[1]);
-            close(p_father_sd[0]);
+            else printf("Utente non in RUBRICA\n");
           }
           else if(logged && strcmp(command,"hanging")==0 && (nump == 0)){
-            //printf("RICHIESTA DI HANGING\n");
             hanging_protocol_client(srv_sd, username);
           }
           else if(logged && strcmp(command,"show")==0 && (nump == 1)){
-            //printf("RICHIESTA DI SHOW\n");
             sender = strtok(NULL, " ");
             show_protocol_client(srv_sd, username, sender, &l_chat);
           }
