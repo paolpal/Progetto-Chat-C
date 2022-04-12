@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "../structs.h"
 #include "../utility.h"
 
 int login_check(char *user, char *pw){
@@ -220,18 +219,19 @@ struct hanging_msg** append_dest(struct destinatario** head_ref, char* username)
   return &(new_node->messaggi);
 }
 
-void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg){
+void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n){
   if(*head_ref==NULL){
     struct hanging_msg* new_msg = (struct hanging_msg*) malloc(sizeof(struct hanging_msg));
     new_msg->msg = msg;
     new_msg->send = send_user;
     new_msg->dest = dest_user;
+    new_msg->seq_n = seq_n;
     new_msg->timestamp = (time_t*)malloc(sizeof(time_t));
     time(new_msg->timestamp);
     new_msg->next = *head_ref;
     *head_ref = new_msg;
   }
-  else append_msg(&(*head_ref)->next,dest_user,send_user,msg);
+  else append_msg(&(*head_ref)->next, dest_user, send_user, msg, seq_n);
 }
 
 void prind_all_hanging_msg(struct destinatario* head){
@@ -309,4 +309,87 @@ void display_help_message(){
   printf("1) help --> mostra i dettagli dei comandi\n");
   printf("2) list --> mostra un elenco degli utenti connsessi\n");
   printf("3) esc  --> chiude il server\n");
+}
+
+int forward_msg(short port, char* sender, int seq_n, char* msg){
+  int len, ret, cht_sd;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+
+  struct sockaddr_in dest_addr;
+
+  // apro la socket di destinazione
+  cht_sd = socket(AF_INET, SOCK_STREAM, 0);
+
+  memset(&dest_addr, 0, sizeof(dest_addr));
+  dest_addr.sin_family = AF_INET;
+  dest_addr.sin_port = htons(port);
+  inet_pton(AF_INET, "127.0.0.1", &dest_addr.sin_addr);
+  ret = connect(cht_sd, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+  if(ret<0){
+    return 0;
+  }
+  //INVIO LA RICHIESTA DI MESSAGGIO
+  sprintf(buffer,"%s", "MSG");
+  ret = send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DEL MITTENTE
+  len = strlen(sender)+1;
+  lmsg = htons(len);
+  ret = send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  //INVIO IL MITTENTE
+  sprintf(buffer,"%s", sender);
+  ret = send_all(cht_sd, (void*) buffer, len, 0);
+
+  //INVIO LA LUNGHEZZA DEL MESSAGGIO
+  len = strlen(msg)+1;
+  lmsg = htons(len);
+  ret = send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  //INVIO IL MESSAGGIO
+  ret = send_all(cht_sd, (void*) msg, len, 0);
+
+  //INVIO IL NUMERO DI SEQUENZA
+  lmsg = htons(seq_n);
+  ret = send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+
+  // chiudo la socket di destinazione
+  close(cht_sd);
+
+  return 1;
+}
+
+void forward_msg_ack(short port, char* dest, int seq_n){
+  int len, ret, cln_sd;
+  uint16_t lmsg;
+  char buffer[BUF_LEN];
+
+  struct sockaddr_in dest_addr;
+
+  //APRO LA SOCKET DI DESTINAZIONE
+  cln_sd = socket(AF_INET, SOCK_STREAM, 0);
+
+  memset(&dest_addr, 0, sizeof(dest_addr));
+  dest_addr.sin_family = AF_INET;
+  dest_addr.sin_port = htons(port);
+  inet_pton(AF_INET, "127.0.0.1", &dest_addr.sin_addr);
+  ret = connect(cln_sd, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+
+  // FACCIO RICHIESTA DI MESSAGE ACK
+  sprintf(buffer,"%s", "MAK");
+  ret = send_all(cln_sd, (void*)buffer, REQ_LEN, 0);
+
+  //INVIO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
+  len = strlen(dest)+1;
+  lmsg = htons(len);
+  ret = send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  //INVIO LO USERNAME DESTINATARIO
+  sprintf(buffer,"%s", dest);
+  ret = send_all(cln_sd, (void*) buffer, len, 0);
+
+  //INVIO IL NUMERO DI SEQUENZA
+  lmsg = htons(seq_n);
+  ret = send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+
+  //CHIUDO LA SOCKET
+  close(cln_sd);
 }

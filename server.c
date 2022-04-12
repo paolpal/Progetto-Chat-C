@@ -60,6 +60,7 @@ int main(int argc, char const *argv[]) {
 
   fdmax = listener;
 
+  srand(time(NULL));
   printf("********************** SERVER AVVIATO **********************\n");
   display_help_message();
   while(status == ON){
@@ -123,6 +124,10 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"GRP")==0){
             printf("RICHIESTA DI GROUP\n");
             group_protocol(i, &registro, buffer);
+          }
+          else if(strcmp(buffer,"MAK")==0){
+            printf("RICHIESTA DI MESSAGE ACK\n");
+            forw_msg_ack_protocol(i, &registro, buffer);
           }
         }
       }

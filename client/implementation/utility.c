@@ -9,6 +9,7 @@ struct user* append_user(struct user** chatroom, char* username){
     new_user->username = (char*) malloc(len*sizeof(char));
     strcpy(new_user->username, username);
     new_user->cht_sd = 0;
+    new_user->next_seq_n = 0;
     //new_user->next = *head_ref;
     new_user->next = NULL;
     *chatroom = new_user;
@@ -63,13 +64,15 @@ ssize_t p_read_all(int fd, char* buffer, int b_size){
   return nread;
 }
 
-struct msg* create_my_msg(char* dest, char* text){
+struct msg* create_my_msg(char* dest, char* text, int seq_n){
   struct msg* msg = (struct msg*)malloc(sizeof(struct msg));
   msg->sender = NULL;
+  msg->ACK = 0;
   msg->dest = (char*) malloc((strlen(dest)+1)*sizeof(char));
   strcpy(msg->dest,dest);
   msg->text = (char*) malloc((strlen(text)+1)*sizeof(char));
   strcpy(msg->text, text);
+  msg->seq_n = seq_n;
   return msg;
 }
 
@@ -97,4 +100,24 @@ void display_help_message(){
   printf("7) out --> eseguo una disconnessione dal server\n");
   printf("8) esc --> termino l'applicazione\n");
   printf("8) help --> mostro il messaggio di aiuto\n");
+}
+
+struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
+  struct chat *c_chat = *l_chat_ref;
+  while(c_chat!=NULL){
+    if(strcmp(c_chat->user, username)==0){
+      return c_chat->l_msg;
+    }
+    c_chat = c_chat->next;
+  }
+  return NULL;
+}
+
+void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
+  struct msg* l_msg = find_msg_list(l_chat_ref, username);
+  struct msg* c_msg = l_msg;
+  while(c_msg!=NULL){
+    if(c_msg->sender == NULL && c_msg->seq_n == seq_n) c_msg->ACK = 1;
+    c_msg = c_msg->next;
+  }
 }

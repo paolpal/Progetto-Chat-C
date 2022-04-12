@@ -147,10 +147,10 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
             strcpy(msg, buffer);
             while(user!=NULL){
               if(user->cht_sd != 0){
-                send_msg(user->cht_sd, my_user, msg);
+                send_msg(user->cht_sd, my_user, msg, user->next_seq_n);
               }
               else {
-                user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->username, &user->addr, msg);
+                user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->username, &user->addr, msg, &user->next_seq_n);
               }
               sprintf(buffer, "MSG");
               write(p_son_sd, buffer, REQ_LEN);
@@ -166,8 +166,9 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
               // MANDO IL MESSAGGIO
               write(p_son_sd, msg, len);
               // MANDO IL NUMERO DI SEQUENZA
-              // --- len = NUMERO SEQUENZA;
-              // --- write(p_son_sd, &len, sizeof(uint32_t));
+              len = user->next_seq_n;
+              write(p_son_sd, &len, sizeof(uint32_t));
+              user->next_seq_n++;
               user = user->next;
             }
           }
@@ -179,7 +180,7 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
   write(p_son_sd, buffer, REQ_LEN);
 }
 
-void send_msg(int cht_sd, char* my_user, char* msg){
+void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
   int len, ret;
   uint16_t lmsg;
   char buffer[BUF_LEN];
@@ -205,50 +206,62 @@ void send_msg(int cht_sd, char* my_user, char* msg){
   ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MESSAGGIO
   ret = send(cht_sd, (void*) msg, len, 0);
+
+  //INVIO IL NUMERO DI SEQUENZA
+  lmsg = htons(seq_n);
+  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   return;
 }
 
-void recv_msg(int cht_sd, int p_father_sd, int p_son_sd, int chatting, struct chat** ricevuti, char* buffer){
+void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chatting, char* my_user, struct chat** ricevuti, char* buffer){
   uint16_t lmsg;
   uint32_t len_t;
   int len;
-  struct msg* messaggio = (struct msg*) malloc(sizeof(struct msg));
+  struct msg* msg = (struct msg*) malloc(sizeof(struct msg));
 
-  messaggio->dest = NULL;
+  msg->dest = NULL;
 
   //RICEVO LA LUNGHEZZA DEL MITTENTE
   printf("<LOG-M> Ricevo lo USERNAME mittente\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  messaggio->sender = (char*) malloc(len*sizeof(char));
-  messaggio->next = NULL;
+  msg->sender = (char*) malloc(len*sizeof(char));
+  msg->next = NULL;
   //RICEVO IL MITTENTE
   recv_all(cht_sd, (void*)buffer, len, 0);
-  sscanf(buffer, "%s", messaggio->sender);
+  sscanf(buffer, "%s", msg->sender);
 
   //RICEVO LA LUNGHEZZA DEL MESSAGGIO
   printf("<LOG-M> Ricevo il MESSAGGIO\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  messaggio->text = (char*) malloc(len*sizeof(char));
+  msg->text = (char*) malloc(len*sizeof(char));
   //RICEVO IL MESSAGGIO
   recv_all(cht_sd, (void*)buffer, len, 0);
-  strcpy(messaggio->text,buffer);
+  strcpy(msg->text,buffer);
+
+  //RICEVO IL NUMERO DI SEQUENZA
+  printf("<LOG-M> Ricevo il NUMERO DI SEQUENZA\n");
+  recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  msg->seq_n = ntohs(lmsg);
+
+  // INVIO L'ACK DI RICEZIONE
+  send_msg_ack_protocol_client(srv_sd, my_user, msg->sender, msg->seq_n);
 
   //COMUNICO CON IL CHATTING PROCESS SE ATTIVO
   if(chatting){
     printf("<LOG-M> Invio la richiesta di CHECK al CHATTING PROCESS\n");
     sprintf(buffer, "CHK");
     write(p_father_sd, buffer, REQ_LEN);
-    len_t = strlen(messaggio->sender)+1;
+    len_t = strlen(msg->sender)+1;
     write(p_father_sd, &len_t, sizeof(uint32_t));
-    write(p_father_sd, messaggio->sender, len_t);
+    write(p_father_sd, msg->sender, len_t);
     printf("<LOG-M> Leggo la valutazione del CHATTING PROCESS\n");
     read(p_son_sd, buffer, 2);
     if(strcmp(buffer, "1")==0)
-      stampa_messaggio(messaggio);
+      stampa_messaggio(msg);
   }
-  accoda_messaggio(ricevuti, messaggio);
+  accoda_messaggio(ricevuti, msg);
 
 }
 
@@ -287,8 +300,10 @@ void push_msg(struct msg **l_msg, struct msg *msg){
 void stampa_messaggio(struct msg *msg){
   if(msg->sender != NULL)
     printf("\r%s : %s", msg->sender, msg->text);
-  else
-    printf("\r* %s", msg->text);
+  else{
+    if(msg->ACK==0) printf("\r* %s", msg->text);
+    else printf("\r** %s", msg->text);
+  }
   fflush(stdout);
 }
 

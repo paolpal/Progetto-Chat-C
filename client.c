@@ -17,7 +17,7 @@
 #include "client/input.h"
 
 int main(int argc, char const *argv[]) {
-  int nump, ret, srv_sd, listener, newfd, i;
+  int nump, ret, srv_sd, listener, newfd, i, seq_n;
   int p_father_sd[2], p_son_sd[2];
   unsigned int addrlen;
 
@@ -129,12 +129,13 @@ int main(int argc, char const *argv[]) {
             read(p_son_sd[0], buffer, len);
             msg_text = buffer;
             // RICEVO IL NUMERO DI SEQUENZA
-            // --- read(p_son_sd[0], &len, sizeof(uint32_t));
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            seq_n = len;
 
             //read(p_son_sd[0], buffer, BUF_LEN);
             //dest = strtok(buffer,":");
             //msg_text = &buffer[strlen(dest)+1];
-            msg = create_my_msg(dest, msg_text);
+            msg = create_my_msg(dest, msg_text, seq_n);
             //stampa_messaggio(msg);
             accoda_messaggio(&l_chat, msg);
           }
@@ -196,8 +197,6 @@ int main(int argc, char const *argv[]) {
           else if(logged && strcmp(command,"out")==0 && (nump == 0)){
             printf("RICHIESTA DI LOGOUT\n");
             logged = 0;
-            //printf("CHECK CORRETTO\n");
-            //printf("%s\n", username);
             if(logout_protocol_client(srv_sd, username)){
               printf("Logout avvenuto con successo!\n");
               close(srv_sd);
@@ -209,7 +208,6 @@ int main(int argc, char const *argv[]) {
           // la notifica avviene tramite la chiusura della pipe
           else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
             //printf("RICHIESTA DI CHAT\n");
-            //scanf("%s", dest);
             dest = strtok(NULL, " ");
             pipe(p_son_sd);
             pipe(p_father_sd);
@@ -251,7 +249,6 @@ int main(int argc, char const *argv[]) {
         else {
           ret = recv_all(i, (void*)buffer, REQ_LEN, 0);
           if(ret==0){
-            //printf("Peer Disconnesso\n");
             fflush(stdout);
             close(i);
             FD_CLR(i, &master);
@@ -259,7 +256,11 @@ int main(int argc, char const *argv[]) {
           }
           if(strcmp(buffer, "MSG")==0){
             printf("<LOG-M> Ricevo richiesta di MESSAGE\n");
-            recv_msg(i, p_father_sd[1], p_son_sd[0], chatting, &l_chat, buffer);
+            recv_msg(srv_sd, i, p_father_sd[1], p_son_sd[0], chatting, username, &l_chat, buffer);
+          }
+          else if(strcmp(buffer, "MAK")==0){
+            printf("<LOG-M> Ricevo richiesta di MESSAGE ACK\n");
+            recv_msg_ack_protocol_client(i, &l_chat);
           }
           else if(strcmp(buffer, "ADD")==0){
             printf("<LOG-M> Ricevo richiesta di ADD USER\n");

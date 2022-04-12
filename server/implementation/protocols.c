@@ -12,7 +12,7 @@
 #include "../constants.h"
 #include "../networking.h"
 #include "../utility.h"
-//#include "protocols.h"
+#include "../protocols.h"
 
 void signup_protocol(int i, char* buffer){
   //printf("Protocollo di iscrizione avviato\n");
@@ -116,14 +116,13 @@ void logout_protocol(int i, struct user_data** utenti, char* buffer){
 void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** destinatari,  char* buffer){
   char *dest, *send, *msg;
   uint16_t lmsg;
-  int len;
+  int len, seq_n;
   short port;
 
   //RICEVO LA LUNGHEZZA DEL NOME DESTINATARIO
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   dest = (char*) malloc(len*sizeof(char));
-
   //RICEVO IL NOME DESTINATARIO
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", dest);
@@ -132,7 +131,6 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   send = (char*) malloc(len*sizeof(char));
-
   //RICEVO IL NOME MITTENTE
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", send);
@@ -140,15 +138,21 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   //RICEVO LA LUNGHEZZA DEL MESSAGGIO
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  //printf("Lunghezza messaggio : %d\n", len);
   msg = (char*) malloc(len*sizeof(char));
-
   //RICEVO IL MESSAGGIO
   recv_all(i, (void*)buffer, len, 0);
-  //sscanf(buffer, "%s", msg);
-  strcpy(msg,buffer);
+  strcpy(msg, buffer);
 
-  //printf("%s\n", msg);
+  //RICEVO IL NUMERO DI SEQUENZA
+  recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  seq_n = ntohs(lmsg);
+
+  // numero di sequenza non fissato, ne genero uno e lo invio al client
+  if(seq_n==0){
+    seq_n = rand();
+    lmsg = htons(seq_n);
+    send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+  }
 
   // ricerco il destinatario tra gli utenti attivi
   // anche timestamp_logout deve essere NULL
@@ -157,7 +161,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   int rep = 0;
   int forwarded = 0;
   if(port!=0) while(!forwarded && rep < 3) {
-    forwarded = forward_msg(port, send, msg);
+    forwarded = forward_msg(port, send, seq_n, msg);
     rep++;
   }
   //NON lo trovo : appendo
@@ -167,67 +171,13 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
     struct hanging_msg** msg_list_ref;
     msg_list_ref = find_pending_msg(destinatari, dest);
-    append_msg(msg_list_ref, dest, send, msg);
+    append_msg(msg_list_ref, dest, send, msg, seq_n);
     //new_pending_msg(destinatari, dest);
   }
 
   //rispondo sempre con la porta: se non l'ho trovata contiene ZERO
   lmsg = htons(port);
   send_all(i,(void*) &lmsg, sizeof(uint16_t), 0);
-}
-
-int forward_msg(short port, char* sender, char* msg){
-  int len, ret, cht_sd;
-  uint16_t lmsg;
-  char buffer[BUF_LEN];
-
-  struct sockaddr_in dest_addr;
-
-  // apro la socket di destinazione
-  cht_sd = socket(AF_INET, SOCK_STREAM, 0);
-
-  memset(&dest_addr, 0, sizeof(dest_addr));
-  dest_addr.sin_family = AF_INET;
-  dest_addr.sin_port = htons(port);
-  inet_pton(AF_INET, "127.0.0.1", &dest_addr.sin_addr);
-  ret = connect(cht_sd, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
-  if(ret<0){
-    return 0;
-  }
-  //INVIO LA RICHIESTA DI MESSAGGIO
-  sprintf(buffer,"%s", "MSG");
-  //printf("Invio richiesta di CHAT\n");
-  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
-
-  //INVIO LA LUNGHEZZA DEL MITTENTE
-  len = strlen(sender)+1;
-  lmsg = htons(len);
-  //printf("LUNGHEZZA username : %d (%d)\n", len, (int)lmsg);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
-  //printf("Mancano da inviare %d (inviati %d)\n",(int)sizeof(uint16_t)-ret,ret);
-
-  //INVIO IL MITTENTE
-  //printf("Invio lo username\n");
-  sprintf(buffer,"%s", sender);
-  ret = send(cht_sd, (void*) buffer, len, 0);
-  //printf("Mancano da inviare %d (inviati %d)\n",len-ret,ret);
-
-  //INVIO LA LUNGHEZZA DEL MESSAGGIO
-  len = strlen(msg)+1;
-  //printf("Messaggio lungo : %d\n", len);
-  lmsg = htons(len);
-  //printf("LUNGHEZZA messaggio : %d (%d)\n", len, (int)lmsg);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
-  //printf("Mancano da inviare %d (inviati %d)\n",(int)sizeof(uint16_t)-ret,ret);
-
-  //INVIO IL MESSAGGIO
-  //printf("Invio il messaggio : %s\n", msg);
-  ret = send(cht_sd, (void*) msg, len, 0);
-
-  // chiudo la socket di destinazione
-  close(cht_sd);
-
-  return 1;
 }
 
 void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
@@ -346,13 +296,13 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
     //INVIO LA LUNGHEZZA DEL MESSAGGIO
     len = strlen(msg->msg)+1;
     lmsg = htons(len);
-    //printf("LUNGHEZZA username : %d (%d)\n", len, (int)lmsg);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
-
     //INVIO IL MESSAGGIO
-    //printf("Invio lo username\n");
     sprintf(buffer,"%s", msg->msg);
     ret = send_all(i, (void*) buffer, len, 0);
+    //INVIO IL NUMERO SEQUENZIALE
+    lmsg = htons(msg->seq_n);
+    ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 
     //free(msg);
   }
@@ -384,4 +334,34 @@ void group_protocol(int i, struct user_data** utenti, char* buffer){
   //TERMINO LA PROCEDURA INVIANDO ZERO
   lmsg = htons(0);
   ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+}
+
+void forw_msg_ack_protocol(int i, struct user_data** utenti, char* buffer){
+  int len, ret, seq_n;
+  short port;
+  uint16_t lmsg;
+  char *sender, *dest;
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME MITTENTE
+  ret = recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  sender = (char*) malloc(len*sizeof(char));
+  //RICEVO LO USERNAME MITTENTE
+  ret = recv_all(i, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", sender);
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
+  ret = recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  len = ntohs(lmsg);
+  dest = (char*) malloc(len*sizeof(char));
+  //RICEVO LO USERNAME DESTINATARIO
+  ret = recv_all(i, (void*)buffer, len, 0);
+  sscanf(buffer, "%s", dest);
+
+  //RICEVO IL NUMERO DI SEQUENZA
+  ret = recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  seq_n = ntohs(lmsg);
+
+  port = find_port(utenti, sender);
+  if(port != 0) forward_msg_ack(port, dest, seq_n);
 }

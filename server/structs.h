@@ -27,6 +27,7 @@ struct hanging_msg{
   char *msg;
   char *send;
   char *dest;
+  int seq_n;
   time_t *timestamp;
   struct hanging_msg *next;
 };

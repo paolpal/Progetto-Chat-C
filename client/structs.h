@@ -23,14 +23,11 @@ struct msg{
   int ACK;
   int seq_n;
   char *dest;
-  //time_t *timestamp;
   struct msg *next;
 };
 
 struct chat{ // chat - mittente
   char *user; // user - mittente
-  //int quanti;
-  //time_t *timestamp;
   struct msg *l_msg;
   struct chat *next;
 };
@@ -38,6 +35,7 @@ struct chat{ // chat - mittente
 struct user{
   char* username;
   int cht_sd;
+  int next_seq_n;
   struct sockaddr_in addr;
   struct user* next;
 };

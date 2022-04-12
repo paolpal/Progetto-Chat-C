@@ -10,6 +10,9 @@
 
 #include "structs.h"
 #include "protocols.h"
+#include "networking.h"
+#include "constants.h"
+#include "structs.h"
 
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
@@ -28,7 +31,7 @@ int logout(struct user_data** head_ref, char *user);
 int find_port(struct user_data** head_ref, char *username);
 struct hanging_msg** append_dest(struct destinatario** head_ref, char* username);
 struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* username);
-void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg);
+void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n);
 void prind_all_hanging_msg(struct destinatario* head);
 void find_sender(struct hanging_msg* msg_head, struct sender** sender_head_ref);
 void add_one_msg(struct sender** sender_head_ref, char* username);
@@ -37,5 +40,7 @@ struct hanging_msg* remove_msg(struct hanging_msg** l_msg_ref, char* sender);
 void delete_by_socket(struct user_data** head_ref, int sd);
 char* find_user_by_socket(struct user_data** head_ref, int sd);
 void find_last_timestamp(time_t** timestamp, struct hanging_msg* l_msg, char* username);
+int forward_msg(short port, char* sender, int seq_n, char* msg);
+void forward_msg_ack(short port, char* dest, int seq_n);
 
 #endif
