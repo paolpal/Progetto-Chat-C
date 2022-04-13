@@ -226,7 +226,7 @@ int main(int argc, char const *argv[]) {
             sender = strtok(NULL, " ");
             show_protocol_client(srv_sd, username, sender, &l_chat);
           }
-          else if(!logged && strcmp(command,"esc")==0){
+          else if(strcmp(command,"esc")==0){
             printf("Arrivederci\n");
             close(listener);
             exit(0);
@@ -261,7 +261,7 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer, "ADD")==0){
             printf("<LOG-M> Ricevo richiesta di ADD USER\n");
-            add_user_protocol_client(i, p_father_sd[1]);
+            add_user_protocol_client(i, p_father_sd[1], chatting);
           }
           else if(strcmp(buffer, "SHR")==0){
             printf("<LOG-M> Ricevo richiesta di SHARE FILE\n");
@@ -269,11 +269,11 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer, "BEY")==0){
             printf("<LOG-M> Ricevo richiesta di LEAVE\n");
-            leave_chatroom_protocol_client(i, p_father_sd[1]);
+            leave_chatroom_protocol_client(i, p_father_sd[1], chatting);
           }
           else if(strcmp(buffer, "JNG")==0){
             printf("<LOG-M> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
-            join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0]);
+            join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0], chatting);
           }
         }
       }
