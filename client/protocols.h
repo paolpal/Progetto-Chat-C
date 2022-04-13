@@ -1,7 +1,11 @@
-#include "structs.h"
-
 #ifndef _CLIENT_PROTOCOL_H_
 #define _CLIENT_PROTOCOL_H_
+
+#include "structs.h"
+#include "chatting.h"
+#include "constants.h"
+#include "networking.h"
+#include "filetransfer.h"
 
 int signup_protocol_client(int sd, char* user, char* pw);
 int login_protocol_client(int sd, char* user, char* pw, short port);

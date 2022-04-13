@@ -10,6 +10,11 @@
 
 #include "../utility.h"
 
+// ****************************************
+// la funzione login_check(...) controlla che la
+// coppia username e password passata sia
+// presente nel file login.txt
+// ****************************************
 int login_check(char *user, char *pw){
   FILE *login_file = NULL;
   char username[512], password[512];
@@ -27,6 +32,11 @@ int login_check(char *user, char *pw){
   return found;
 }
 
+// ****************************************
+// la funzione username_used(...) verifica
+// che lo username passato non sia
+// gia' stato utilizzato
+// ****************************************
 int username_used(char *user){
   FILE *login_file = NULL;
   char username[512], password[512];
@@ -42,6 +52,10 @@ int username_used(char *user){
   return found;
 }
 
+// ****************************************
+// la funzione signup(...) aggiunge un record
+// al file login.txt
+// ****************************************
 int signup(char *user, char *pw){
   FILE *login_file = NULL;
   if(username_used(user)) return 0;
@@ -53,6 +67,11 @@ int signup(char *user, char *pw){
   return 1;
 }
 
+// ****************************************
+// la funzione present(...) controlla che
+// lo username specificato sia o meno nel
+// registro passato
+// ****************************************
 int present(struct user_data** head_ref, char *username){
   struct user_data* current = *head_ref;
   int found = 0;
@@ -63,6 +82,10 @@ int present(struct user_data** head_ref, char *username){
   return found;
 }
 
+// ****************************************************************
+// la funzione find_port(...) consultando il registro passato
+// restituisce la porta associata allo username specificato
+// ****************************************************************
 int find_port(struct user_data** head_ref, char *username){
   struct user_data* current = *head_ref;
   while(current != NULL){
@@ -72,6 +95,11 @@ int find_port(struct user_data** head_ref, char *username){
   return 0;
 }
 
+// ****************************************
+// la funzione is_online(...) controlla che
+// l'utente specificato sia online consultando
+// il registro
+// ****************************************
 int is_online(struct user_data** l_user_ref, char *username){
   struct user_data* c_user = *l_user_ref;
   while(c_user != NULL){
@@ -81,6 +109,10 @@ int is_online(struct user_data** l_user_ref, char *username){
   return 0;
 }
 
+// ****************************************
+// la funzione update_register(...) aggiorna i dati del registro
+// dello username specificato
+// ****************************************
 void update_register(struct user_data** head_ref, char *username, short port, int sd){
   struct user_data* current = *head_ref;
   while(current != NULL){
@@ -121,6 +153,9 @@ void push_registro(struct user_data** head_ref, char *username, short port, int 
   update_register(head_ref, username, port, sd);
 }
 
+// ****************************************
+// Elimina il registro passato
+// ****************************************
 void delete_list(struct user_data** head_ref) {
   struct user_data* current = *head_ref;
   struct user_data* next;
@@ -135,6 +170,10 @@ void delete_list(struct user_data** head_ref) {
   *head_ref = NULL;
 }
 
+// ****************************************
+// Elimina dal registro l'utente associato
+// alla socket specificata.
+// ****************************************
 void delete_by_socket(struct user_data** head_ref, int sd){
   struct user_data* user = *head_ref, *prev;
   if(user != NULL && user->sd == sd) {
@@ -151,6 +190,10 @@ void delete_by_socket(struct user_data** head_ref, int sd){
   free(user);
 }
 
+// ****************************************
+// ritorna lo username dell'utente associato
+// alla socket specificata
+// ****************************************
 char* find_user_by_socket(struct user_data** head_ref, int sd){
   struct user_data* user = *head_ref;
   while(user!=NULL){
@@ -160,22 +203,11 @@ char* find_user_by_socket(struct user_data** head_ref, int sd){
   return NULL;
 }
 
-
-/*
-void display_list(struct user_data* head) {
-  struct user_data *temp;
-  temp=head;
-  while(temp!=NULL){
-    if(temp->timestamp_logout != NULL)
-      printf("%s %d %s %s", temp->user_dest, ntohs(temp->port), ctime(temp->timestamp_login), ctime(temp->timestamp_logout));
-    else
-      printf("%s %d %s", temp->user_dest, ntohs(temp->port), ctime(temp->timestamp_login));
-    temp=temp->next;
-  }
-  return;
-}
-*/
-
+// ****************************************
+// stampa la lista degli utenti online
+// nel formato specificato:
+// username*porta*timestam
+// ****************************************
 void display_list(struct user_data* head) {
   struct user_data *temp;
   temp=head;
@@ -187,6 +219,11 @@ void display_list(struct user_data* head) {
   return;
 }
 
+// ****************************************
+// verifica che l'utente che le credenziali
+// inserite corrispondano ad un account
+// e nel caso, aggiunge l'utente al registro
+// ****************************************
 int login(struct user_data** head_ref, char *user, char *pw, short port, int sd){
   if(login_check(user, pw)){
     push_registro(head_ref, user, port, sd);
@@ -195,6 +232,10 @@ int login(struct user_data** head_ref, char *user, char *pw, short port, int sd)
   return 0;
 }
 
+// ****************************************
+// setta il timestamp di logout dell'account
+// che ha fatto richiesta
+// ****************************************
 int logout(struct user_data** head_ref, char *user){
   struct user_data* current = *head_ref;
   while(current != NULL){
@@ -208,6 +249,12 @@ int logout(struct user_data** head_ref, char *user){
   return 0;
 }
 
+// ****************************************
+// presa la lista degli utenti
+// che hanno messaggi pendenti
+// ritornaa il riferimento alla lista dei
+// messaggi pendenti dell'utente specificato
+// ****************************************
 struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* username){
   struct destinatario* current = *head_ref;
   while(current != NULL){
@@ -217,6 +264,11 @@ struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* user
   return append_dest(head_ref, username);
 }
 
+// ****************************************
+// aggiunge alla lista dei destinatari
+// un nuovo destinatario, in testa
+// e ritorna il riferimento alla lista dei messaggi
+// ****************************************
 struct hanging_msg** append_dest(struct destinatario** head_ref, char* username){
   struct destinatario* new_node = (struct destinatario*) malloc(sizeof(struct destinatario));
   new_node->destinatario = (char*) malloc(sizeof(char)*(strlen(username)+1));
@@ -228,6 +280,11 @@ struct hanging_msg** append_dest(struct destinatario** head_ref, char* username)
   return &(new_node->messaggi);
 }
 
+// ****************************************
+// aggiunge un messaggio pendente alla
+// lista specificata,
+// l'inserimento è in coda
+// ****************************************
 void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n){
   if(*head_ref==NULL){
     struct hanging_msg* new_msg = (struct hanging_msg*) malloc(sizeof(struct hanging_msg));
@@ -243,6 +300,10 @@ void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user,
   else append_msg(&(*head_ref)->next, dest_user, send_user, msg, seq_n);
 }
 
+// ****************************************
+// funzione di debug: per stampare i messaggi pendenti
+// e controllare lo stato del server
+// ****************************************
 void prind_all_hanging_msg(struct destinatario* head){
   struct destinatario* current_dest = head;
   struct hanging_msg* current_msg = NULL;
@@ -257,6 +318,10 @@ void prind_all_hanging_msg(struct destinatario* head){
   }
 }
 
+// ****************************************
+// Inserisco lo username nella lista dei mittenti
+// specificata
+// ****************************************
 void append_sender(struct sender** sender_head_ref, char* username){
   struct sender* new_sender = (struct sender*)malloc(sizeof(struct sender));
   new_sender->username = username;
@@ -265,10 +330,12 @@ void append_sender(struct sender** sender_head_ref, char* username){
   *sender_head_ref = new_sender;
 }
 
-/*
-Aggiungo 1 al numero dei messaggi ricevuti dal mittente,
-Se il mittente non è nella lista, lo aggiungo (1 messaggio già inserito)
-*/
+
+// ****************************************
+// Aggiungo 1 al numero dei messaggi ricevuti
+// dal mittente, se il mittente non è nella lista,
+// lo aggiungo (1 messaggio già inserito)
+// ****************************************
 void add_one_msg(struct sender** sender_head_ref, char* username){
   struct sender* c_send = *sender_head_ref;
   while (c_send!=NULL){
@@ -281,6 +348,11 @@ void add_one_msg(struct sender** sender_head_ref, char* username){
   append_sender(sender_head_ref, username);
 }
 
+// ****************************************
+// data una lista di messaggi, creo una
+// lista dei mittenti, ad ognuno è associato
+// il numero di messaggi che ha spedito
+// ****************************************
 void find_sender(struct hanging_msg* msg_head, struct sender** sender_head_ref){
   struct hanging_msg* c_msg = msg_head;
   while(c_msg!=NULL){
@@ -289,6 +361,11 @@ void find_sender(struct hanging_msg* msg_head, struct sender** sender_head_ref){
   }
 }
 
+// ****************************************
+// rimuove dalla lista il primo messaggio
+// dell'utente specificato. se non ne trova
+// ritorna NULL
+// ****************************************
 struct hanging_msg* remove_msg(struct hanging_msg** l_msg_ref, char* sender){
   struct hanging_msg* c_msg = *l_msg_ref, *prev;
 
@@ -305,6 +382,12 @@ struct hanging_msg* remove_msg(struct hanging_msg** l_msg_ref, char* sender){
   return c_msg;
 }
 
+// ****************************************
+// data la lista dei messaggi e uno username
+// scrive all'indirizzo passato, il timestamp
+// del messaggio più recente del mittente specificato.
+// (l'ultimo della lista)
+// ****************************************
 void find_last_timestamp(time_t** timestamp, struct hanging_msg* l_msg, char* username){
   struct hanging_msg* c_msg = l_msg;
   while(c_msg!=NULL){
@@ -320,6 +403,11 @@ void display_help_message(){
   printf("3) esc  --> chiude il server\n");
 }
 
+// ****************************************
+// la funzione forward_msg(...) inoltra il
+// messaggio ricevuto dal mittente, alla porta
+// passata, dove è in ascolto il destinatario
+// ****************************************
 int forward_msg(short port, char* sender, int seq_n, char* msg){
   int len, ret, cht_sd;
   uint16_t lmsg;
@@ -367,6 +455,13 @@ int forward_msg(short port, char* sender, int seq_n, char* msg){
   return 1;
 }
 
+// ****************************************
+// la funzione forward_msg_ack inoltra l'ack
+// di ricezione al mittente, che è in ascolto
+// sulla porta specificata.
+// l'ack è costituito da username destinatario
+// e numero di sequenza...
+// ****************************************
 void forward_msg_ack(short port, char* dest, int seq_n){
   int len, ret, cln_sd;
   uint16_t lmsg;

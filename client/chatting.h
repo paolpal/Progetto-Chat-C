@@ -1,10 +1,20 @@
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+
+#ifndef _CLIENT_CHAT_H_
+#define _CLIENT_CHAT_H_
+
 #include "structs.h"
 #include "constants.h"
 #include "protocols.h"
 #include "utility.h"
-
-#ifndef _CLIENT_CHAT_H_
-#define _CLIENT_CHAT_H_
 
 void accoda_messaggio(struct chat **ricevuti, struct msg *messaggio);
 void push_msg(struct msg **messaggi, struct msg *messaggio);

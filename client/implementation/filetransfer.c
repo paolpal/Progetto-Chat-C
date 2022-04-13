@@ -1,15 +1,4 @@
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-
 #include "../filetransfer.h"
-#include "../networking.h"
 
 void recv_file(int sockfd, char* filename){
   int n;
@@ -41,19 +30,22 @@ void send_file(char* filename, int sockfd){
 
   fp = fopen(filename, "r");
   if(fp==NULL){
-    perror("[-]Error in opening file.");
     exit(1);
   }
   while(fgets(data, BUF_LEN, fp)!=NULL){
     if(send(sockfd, data, sizeof(data), 0)== -1){
-      perror("[-] Error in sendung data");
       exit(1);
     }
     bzero(data, BUF_LEN);
   }
   fclose(fp);
 }
-
+// ************************************
+// la funzione recv_file_b(...) crea un file
+// con il filename specificato, e ascolta su
+// una sochet uno stream di byte che scrive
+// nel file
+// ************************************
 void recv_file_b(int sd, char* filename){
   int len, ret;
   uint16_t lmsg;
@@ -62,11 +54,9 @@ void recv_file_b(int sd, char* filename){
 
   fp = fopen(filename, "wb");
   if(fp==NULL){
-    perror("[-]Error in creating file.");
     exit(1);
   }
   while(1){
-    //RICEVO LA LUNGHEZZA DEL FILENAME
     ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
     if(ret<=0){
       break;
@@ -82,6 +72,12 @@ void recv_file_b(int sd, char* filename){
   return;
 }
 
+// ************************************
+// la funzione send_file_b(...) apre il file
+// specificato, e leggendolo a più riprese,
+// lo  trasferisce tramite una scoket ad
+// un altro device
+// ************************************
 void send_file_b(char* filename, int sd){
   FILE *fp;
   uint16_t lmsg;
@@ -92,7 +88,6 @@ void send_file_b(char* filename, int sd){
 
   fp = fopen(filename, "rb");
   if(fp==NULL){
-    perror("[-]Error in opening file.");
     exit(1);
   }
   while(!feof(fp)){
@@ -102,7 +97,6 @@ void send_file_b(char* filename, int sd){
 
     ret = send_all(sd, data, r_byte, 0);
     if(ret == -1){
-      perror("[-] Error in sendung data");
       exit(1);
     }
     bzero(data, BUF_LEN);

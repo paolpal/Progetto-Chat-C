@@ -14,27 +14,33 @@
 #include "../utility.h"
 #include "../protocols.h"
 
+// ************************************
+// il protocollo di iscrizione riceve
+// uno username e una password e verifica
+// che lo username sia disponibile
+// quindi lo aggiunge al file di configurazione
+// ************************************
 void signup_protocol(int i, char* buffer){
-  //printf("Protocollo di iscrizione avviato\n");
   char *username, *password;
   uint16_t lmsg;
   int len;
-  //printf("Ricevo lunghezza username\n");
+
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo username\n");
+  //RICEVO LO USERNAME
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
-  //printf("%s\n", username);
-  //printf("Ricevo lunghezza password\n");
+
+  //RICEVO LA LUNGHEZZA DELLA PASSWORD
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   password = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo password\n");
+  //RICEVO LA PASSWORD
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", password);
-  //printf("%s\n", password);
+
   if(signup(username, password)){
     sprintf(buffer, "%s", "SIGNED");
   }
@@ -47,33 +53,40 @@ void signup_protocol(int i, char* buffer){
   return;
 }
 
+// ************************************
+// Il protocollo di login attende uno
+// username, una password e una porta
+// quindi controlla se username e password
+// corrispondono.
+// Risponde con la valutazione.
+// se il login avviene, le informazioni
+// sono memorizzate nel registro
+// ************************************
 void login_protocol(int i, struct user_data** utenti, char* buffer){
-  //printf("Protocollo di login avviato\n");
   char *username, *password;
   uint16_t lmsg;
   int len;
   short port;
 
-  //printf("Ricevo lunghezza username\n");
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo username\n");
+  //RICEVO LO USERNAME
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
-  //printf("%s\n", username);
-  //printf("Ricevo lunghezza password\n");
+
+  //RICEVO LA LUNGHEZZA DELLA PASSWORD
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   password = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo password\n");
+  //RICEVO LA PASSWORD
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", password);
-  //printf("%s\n", password);
-  //printf("Ricevo porta\n");
+
+  //RICEVO LA PORTA DI ASCOLTO
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   port = ntohs(lmsg);
-  //printf("Porta ricevuta %d\n", port);
 
   if(login(utenti, username, password, port, i)){
     sprintf(buffer, "%s", "LOGGED");
@@ -87,20 +100,23 @@ void login_protocol(int i, struct user_data** utenti, char* buffer){
   return;
 }
 
+// ****************************************
+// il protocollo di logout riceve uno username
+// quindi aggiorna i dati del registro corrispondenti
+// risponde in base all'esito
+// ****************************************
 void logout_protocol(int i, struct user_data** utenti, char* buffer){
-  //printf("Protocollo di login avviato\n");
   char *username;
   uint16_t lmsg;
   int len;
 
-  //printf("Ricevo lunghezza username\n");
+  //RICEVO LA LUNGHEZZA DELLO USERNAME
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo username\n");
+  //RICEVO LO USERNAME
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
-  //printf("%s\n", username);
 
   if(logout(utenti, username)){
     sprintf(buffer, "%s", "EXITED");
@@ -113,6 +129,16 @@ void logout_protocol(int i, struct user_data** utenti, char* buffer){
   return;
 }
 
+// ****************************************
+// il protocollo di new chat riceve un
+// messaggio da un client e prova ad inoltrarlo
+// ad un'altro.
+// restituisce al primo la pora su cui
+// contattare direttamente il destinatario.
+// Se il messaggio è privo di numero sequenziale,
+// ne assegna uno randomico e lo restituisce
+// al mittente.
+// ****************************************
 void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** destinatari,  char* buffer){
   char *dest, *send, *msg;
   uint16_t lmsg;
@@ -154,8 +180,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
     send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
   }
 
-  // ricerco il destinatario tra gli utenti attivi
-  // anche timestamp_logout deve essere NULL
+  // ricerco il destinatario tra gli utenti online
   port = find_port(utenti, dest);
   //lo trovo : inoltro
   int rep = 0;
@@ -166,13 +191,9 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   }
   //NON lo trovo : appendo
   else {
-    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-    // APPENDERE IL MESSAGGIO PENDENTE
-    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
     struct hanging_msg** msg_list_ref;
     msg_list_ref = find_pending_msg(destinatari, dest);
     append_msg(msg_list_ref, dest, send, msg, seq_n);
-    //new_pending_msg(destinatari, dest);
   }
 
   //rispondo sempre con la porta: se non l'ho trovata contiene ZERO
@@ -180,6 +201,11 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   send_all(i,(void*) &lmsg, sizeof(uint16_t), 0);
 }
 
+// ********************************************
+// il protocollo di hanging riceve un nome destinatario
+// e restituisce l'elenco di utenti che hanno contattato
+// con numero di messaggi e timestamp del messaggio più recente
+// ********************************************
 void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
   char *dest;
   uint16_t lmsg;
@@ -190,67 +216,58 @@ void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
   struct sender* c_sender = NULL;
   struct hanging_msg** l_msg_ref;
 
-  //printf("INIZIO PROCEDURA DI HANGING\n");
-
   //RICEVO LA LUNGHEZZA DEL NOME DESTINATARIO (utente che fa richiesta)
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   dest = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo la lunghezza del nome\n");
-
   //RICEVO IL NOME DESTINATARIO
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", dest);
-  //printf("%s\n", dest);
-  //fflush(stdout);
 
+  // cerco la lista di messsaggi associata al destinatario
   l_msg_ref = find_pending_msg(destinatari, dest);
+  //raccolgo tutti i mittenti possibili, dalla lista
   find_sender(*l_msg_ref, &l_sender);
 
+  // per ogni mittente raccolgo i dati associati e li mando al client
   c_sender = l_sender;
   while(c_sender!=NULL){
     //INVIO LA LUNGHEZZA DEL MITTENTE
     len = strlen(c_sender->username)+1;
     lmsg = htons(len);
-    //printf("LUNGHEZZA username : %d (%d)\n", len, (int)lmsg);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
-
     //INVIO IL MITTENTE
-    //printf("Invio lo username\n");
     sprintf(buffer,"%s", c_sender->username);
     ret = send_all(i, (void*) buffer, len, 0);
 
     //INVIO IL NUMERO DI MESSAGGI DEL MITTENTE
     lmsg = htons(c_sender->n_msg);
-    //printf("LUNGHEZZA username : %d (%d)\n", len, (int)lmsg);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 
-    //sprintf(buffer,"%s",ctime(c_sender->timestamp));
     //CERCA IL TIMESTAMP PIU' RECENTE
     printf("CERCO IL TIMESTAMP PIU' RECENTE");
     find_last_timestamp(&timestamp, *l_msg_ref, c_sender->username);
-    printf("trovato: %s", ctime(timestamp));
     sprintf(buffer,"%s", ctime(timestamp));
     //INVIO LA LUNGHEZZA DEL TIMESTAMP
     len = strlen(buffer)+1;
     lmsg = htons(len);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
-
     // INVIO IL TIMESTAMP
     ret = send_all(i, (void*) buffer, len, 0);
 
     c_sender = c_sender->next;
   }
-
   // INVIO ZERO : FINE DELLA TRASMISSIONE
   lmsg = htons(0);
   ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
-
-
 }
 
+// ****************************************
+// il protocollo riceve il nome del destinatario
+// e del mittente
+// quindi manda i messaggi del mittente al
+// destinatario in ordine di ricezzione
+// ****************************************
 void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   char *dest;
   char *sender;
@@ -263,35 +280,27 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   printf("INIZIO PROCEDURA DI SHOW\n");
 
   //RICEVO LA LUNGHEZZA DEL NOME DESTINATARIO (utente che fa richiesta)
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   dest = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo la lunghezza del nome\n");
-
   //RICEVO IL NOME DESTINATARIO
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", dest);
-  //printf("%s\n", dest);
-  //fflush(stdout);
 
   //RICEVO LA LUNGHEZZA DEL NOME MITTENTE
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   sender = (char*) malloc(len*sizeof(char));
-  //printf("Ricevo la lunghezza del nome\n");
-
   //RICEVO IL NOME MITTENTE
-  //printf("Ricevo la lunghezza del nome\n");
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", sender);
-  //printf("%s\n", dest);
-  //fflush(stdout);
 
+  // cerco la lista di messaggi pendenti per il destinatario
   l_msg_ref = find_pending_msg(destinatari, dest);
 
+  //rimuovo il primo messaggio del mittente dalla lista in ciclo
+  // finche non ne resta nessuno
+  // termino quando ritorno NULL
   while((msg = remove_msg(l_msg_ref, sender))!=NULL){
     //INVIO LA LUNGHEZZA DEL MESSAGGIO
     len = strlen(msg->msg)+1;
@@ -312,6 +321,11 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 }
 
+// ************************************
+// il protocollo di group manda all'utente
+// che ha fatto richiesta la lista degli
+// utenti online
+// ************************************
 void group_protocol(int i, struct user_data** utenti, char* buffer){
   uint16_t lmsg;
   int len, ret;
@@ -336,6 +350,12 @@ void group_protocol(int i, struct user_data** utenti, char* buffer){
   ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 }
 
+// ****************************************
+// il protocollo di forward degli ACK
+// di ricezzione è necessario
+// in quanto il server si occupa di
+// instradare correttamente gli ACK
+// ****************************************
 void forw_msg_ack_protocol(int i, struct user_data** utenti, char* buffer){
   int len, ret, seq_n;
   short port;
@@ -366,6 +386,12 @@ void forw_msg_ack_protocol(int i, struct user_data** utenti, char* buffer){
   if(port != 0) forward_msg_ack(port, dest, seq_n);
 }
 
+// ****************************************
+// il protocollo di check online controlla
+// che l'utente specificato sia online
+// il controllo è necessario per assicurarsi
+// che solo utenti online siano aggiunti ai gruppi
+// ****************************************
 void online_check_protocol(int i, struct user_data** utenti, char* buffer){
   int len, ret;
   uint16_t lmsg;

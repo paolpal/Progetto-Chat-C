@@ -1,5 +1,8 @@
 #include "../utility.h"
 
+// *********************************************
+// Aggiunge l'utente specificato alla chatroom
+// *********************************************
 struct user* append_user(struct user** chatroom, char* username){
   int len;
   struct user* new_user;
@@ -10,7 +13,6 @@ struct user* append_user(struct user** chatroom, char* username){
     strcpy(new_user->username, username);
     new_user->cht_sd = 0;
     new_user->next_seq_n = 0;
-    //new_user->next = *head_ref;
     new_user->next = NULL;
     *chatroom = new_user;
     return new_user;
@@ -19,6 +21,9 @@ struct user* append_user(struct user** chatroom, char* username){
   else return append_user(&(*chatroom)->next, username);
 }
 
+// *********************************************
+// Rimuove l'utente specificato dalla chatroom
+// *********************************************
 void remove_user(struct user** chatroom, char* username){
   struct user* user = *chatroom, *prev;
   if(user != NULL && strcmp(user->username,username)==0) {
@@ -35,6 +40,9 @@ void remove_user(struct user** chatroom, char* username){
   free(user);
 }
 
+// *********************************************
+// Stampa l'elenco dei partecipanti alla chatroom
+// *********************************************
 void print_chatroom(struct user* chatroom){
   struct user* user = chatroom;
   while(user!=NULL){
@@ -43,27 +51,25 @@ void print_chatroom(struct user* chatroom){
   }
 }
 
-/*
-  struct user* è una lista di utenti con i quali sto chattando.
-*/
-int chatting_with(char *buffer, struct user* chatroom){
+// *************************************
+// Controllo che l'utente specificato
+// faccia parte della chatroom
+// *************************************
+int chatting_with(char *user, struct user* chatroom){
   struct user * c_user = chatroom;
   while (c_user!=NULL) {
-    if(strcmp(c_user->username, buffer)==0) return 1;
+    if(strcmp(c_user->username, user)==0) return 1;
     c_user= c_user->next;
   }
   return 0;
 }
 
-ssize_t p_read_all(int fd, char* buffer, int b_size){
-  ssize_t nread;
-  while((nread = read(fd, buffer, b_size)) > 0) {
-    buffer[nread] = '\0';
-  }
-
-  return nread;
-}
-
+// *************************************
+// passo i dati necessari alla creazione
+// della struttura msg.
+// Il mittente è NULL per identificare
+// che è l'utente stesso...
+// *************************************
 struct msg* create_my_msg(char* dest, char* text, int seq_n){
   struct msg* msg = (struct msg*)malloc(sizeof(struct msg));
   msg->sender = NULL;
@@ -76,6 +82,11 @@ struct msg* create_my_msg(char* dest, char* text, int seq_n){
   return msg;
 }
 
+// *************************************
+// la funzione riceve una chatroom e
+// una pipe sulla quale scrivere
+// gli username
+// *************************************
 void send_chatroom_mp(int p_son_sd, struct user* chatroom){
   uint32_t len;
   struct user* user = chatroom;
@@ -102,6 +113,11 @@ void display_help_message(){
   printf("8) help --> mostro il messaggio di aiuto\n");
 }
 
+// *************************************
+// data la lista di tutte le chat
+// la funzione ritorna la chat
+// corrispondente all'utente cercato
+// *************************************
 struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
   struct chat *c_chat = *l_chat_ref;
   while(c_chat!=NULL){
@@ -113,6 +129,11 @@ struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
   return NULL;
 }
 
+// *************************************
+// dato lo username di destinazione e
+// il numero di sequenza, setto l'ACK di
+// consegna al messaggio corretto
+// *************************************
 void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
   struct msg* l_msg = find_msg_list(l_chat_ref, username);
   struct msg* c_msg = l_msg;
@@ -122,6 +143,11 @@ void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
   }
 }
 
+// *************************************
+// controllo che lo username specificato
+// sia nella rubrica, altrimenti non
+// posso aprire la chat e ritorno 0
+// *************************************
 int is_in_addr_book(char* username){
   FILE *addr_book_file = NULL;
   char c_name[512];
@@ -136,6 +162,27 @@ int is_in_addr_book(char* username){
   return found;
 }
 
+// *************************************
+// per verificare che l'utente specificato
+// sia online, contatto il server con
+// l'apposita procedura
+// *************************************
 int is_online(int srv_sd, char* username){
   return online_check_protocol_client(srv_sd, username);
+}
+
+// *************************************
+// la funzione conta i parametri passati
+// da linea di comando.
+// necessaria per non avere prblemi
+// durante il parsing dei comandi
+// *************************************
+int parametrs_num(char* str){
+  int count = 0;
+  char *ptr = str;
+  while((ptr = strchr(ptr, ' ')) != NULL) {
+      count++;
+      ptr++;
+  }
+  return count;
 }

@@ -1,19 +1,11 @@
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-
 #include "../protocols.h"
-#include "../chatting.h"
-#include "../constants.h"
-#include "../networking.h"
-#include "../filetransfer.h"
 
+// ********************************************
+// il protocollo di iscrizione trasmette al server
+// la richiesta di iscrizione, il nome utente e
+// la password.
+// Attende quindi l'esito dal server...
+// ********************************************
 int signup_protocol_client(int sd, char* user, char* pw){
   int ret;
   uint16_t lmsg;
@@ -23,7 +15,6 @@ int signup_protocol_client(int sd, char* user, char* pw){
   sprintf(buffer,"%s", "SGN");
   printf("<LOG-M> Invio richiesta di SIGNUP\n");
   ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
-
 
   //INVIO LA LUNGHEZZA DEL NOME
   printf("<LOG-M> Invio lo USERNAME\n");
@@ -50,6 +41,12 @@ int signup_protocol_client(int sd, char* user, char* pw){
   else return 0;
 }
 
+// ********************************************
+// il protocollo di login trasmette al server
+// la richiesta di login, il nome utente,
+// la password e la porta di ascolto.
+// Attende quindi l'esito dal server...
+// ********************************************
 int login_protocol_client(int sd, char* user, char* pw, short port){
   int ret;
   uint16_t lmsg;
@@ -61,15 +58,14 @@ int login_protocol_client(int sd, char* user, char* pw, short port){
   ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
 
 
-  //INVIO LA LUNGHEZZA DEL NOME
+  //INVIO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG-M> Invio lo USERNAME\n");
   int len = strlen(user)+1;
   lmsg = htons(len);
   ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
-  //INVIO IL NOME
+  //INVIO LO USERNAME
   sprintf(buffer,"%s", user);
   ret = send_all(sd, (void*) buffer, len, 0);
-
 
   //INVIO LA LUNGHEZZA DELLA PASSWORD
   printf("<LOG-M> Invio la PASSWORD\n");
@@ -85,7 +81,6 @@ int login_protocol_client(int sd, char* user, char* pw, short port){
   printf("<LOG-M> Invio la PORTA di ascolto\n");
   ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
 
-
   printf("<LOG-M> Attendo il FEEDBACK dal SERVER\n");
   ret = recv_all(sd, (void*) buffer, ACK_LEN, 0);
 
@@ -93,6 +88,11 @@ int login_protocol_client(int sd, char* user, char* pw, short port){
   else return 0;
 }
 
+// ********************************************
+// il protocollo di logout trasmette al server
+// la richiesta di logout e il nome utente.
+// Attende quindi l'esito dal server...
+// ********************************************
 int logout_protocol_client(int sd, char* user){
   int ret;
   uint16_t lmsg;
@@ -119,9 +119,11 @@ int logout_protocol_client(int sd, char* user){
   else return 0;
 }
 
-/*
-Ritorna la socket stabilita con il destinatario, o 0 se l'invio è fallito
-*/
+// ************************************
+// Ritorna la socket stabilita con il
+// destinatario, o 0 se l'invio è fallito.
+// [Il messaggio resta pendente sul server.]
+// ************************************
 int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int* seq_n){
   int ret, len, cht_sd;
   uint16_t lmsg;
@@ -162,7 +164,9 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   lmsg = htons(*seq_n);
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   // se il seq_n non è settato, ne aspetto uno dal server
+  // che viene assegnato randomicamente
   if(*seq_n==0){
+    printf("<LOG-C> Attendo il nuovo NUMERO SEQUENZIALE \n");
     recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
     *seq_n = ntohs(lmsg);
   }
@@ -189,6 +193,12 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   return cht_sd;
 }
 
+// ********************************************
+// il protocollo di hanging chiede al server
+// gli utenti che hanno provato a contattarmi
+// quando ero ofline e quanti messaggi mi sono
+// stati spediti
+// ********************************************
 void hanging_protocol_client(int sd, char* user){
   int ret, len, n_msg;
   uint16_t lmsg;
@@ -210,6 +220,12 @@ void hanging_protocol_client(int sd, char* user){
   ret = send_all(sd, (void*) buffer, len, 0);
 
   printf("<LOG-M> Attendo la lista di MITTENTI dal SERVER\n");
+
+  // **********************
+  // esco dal ciclo quando
+  // ricevo una lunghezza
+  // pari a 0
+  // **********************
   while(1){
     //RICEVO LA LUNGHEZZA DEL NOME MITTENTE
     printf("<LOG-M> Attendo lo USERNAME MITTENTE\n");
@@ -238,6 +254,12 @@ void hanging_protocol_client(int sd, char* user){
   printf("<LOG-M> Fine ricezione\n");
 }
 
+// ********************************************
+// il protocollo di show chiede al server
+// i messaggi che uno specifico utente mi
+// ha spedito. Una volta ricevuti, mando un'ACK
+// di ricezione.
+// ********************************************
 void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat){
   int ret, len, seq_n;
   uint16_t lmsg;
@@ -305,6 +327,12 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
   printf("<LOG-M> Fine ricezione\n");
 }
 
+// *************************************
+// il protocollo di ricezione del file
+// riceve il filename dalla socket,
+// quindi richiama l'apposita funzone
+// di ricezione...
+// *************************************
 void receive_file_protocol_client(int sd){
   int ret, len;
   uint16_t lmsg;
@@ -334,8 +362,7 @@ void receive_file_protocol_client(int sd){
 //
 // comodo per la chat di gruppo
 // *********************
-
-void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){ //char* buffer){
+void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){
   int ret, len, sd;
   uint16_t lmsg;
   char buffer[BUF_LEN];
@@ -370,12 +397,10 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){ /
   close(sd);
 }
 
-// ************** GROUP **************
-// chiedo al server
-// l'elenco degli utenti
-// ATTIVI
-// ***********************************
-
+// ***********************************************
+// chiedo al server l'elenco degli utenti ONLINE
+// e la stampa...
+// ***********************************************
 void group_protocol_client(int srv_sd){
   int ret, len;
   uint16_t lmsg;
@@ -404,6 +429,12 @@ void group_protocol_client(int srv_sd){
   printf("<LOG-M> Fine ricezione\n");
 }
 
+// **************************************************
+// Il protocollo di richiesta di aggiunta, trasmette
+// la richiesta e uno username su una socket.
+// La richiesta è trasmessa a tutti gli utenti
+// di una chatroom...
+// **************************************************
 void add_user_request_protocol_client(int cht_sd, char* username){
   int len, ret;
   uint16_t lmsg;
@@ -424,6 +455,11 @@ void add_user_request_protocol_client(int cht_sd, char* username){
   ret = send(cht_sd, (void*) buffer, len, 0);
 }
 
+// **************************************************
+// in risposta alla richiesta di aggiunta, ricevo il
+// nome utente e contatto il CHATTING PROCESS per
+// aggiungerlo alla CHATROOM...
+// **************************************************
 void add_user_protocol_client(int sd, int p_father_sd){
   int ret, len;
   uint16_t lmsg;
@@ -443,9 +479,10 @@ void add_user_protocol_client(int sd, int p_father_sd){
   //AGGIUNGO L'UTENTE AL CHATTING PROCESS
   printf("<LOG-M> Aggiungo lo USERNAME alla CHATROOM\n");
 
-  // *************
+  // ***************************************
   // comunico con il CHATTING process
-  // *************
+  // tramite le pipe
+  // ***************************************
   printf("<LOG-M> Invio la richiesta di ADD al CHATTING PROCESS\n");
   sprintf(buffer, "ADD");
   write(p_father_sd, buffer, REQ_LEN);
@@ -457,6 +494,11 @@ void add_user_protocol_client(int sd, int p_father_sd){
   write(p_father_sd, buffer, len32);
 }
 
+// ******************************************
+// la richiesta di uscita dalla chattingroom
+// manda il proprio username a tutti gli
+// utenti in ascolto...
+// ******************************************
 void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
   int len, ret;
   uint16_t lmsg;
@@ -477,6 +519,12 @@ void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
   ret = send(cht_sd, (void*) buffer, len, 0);
 }
 
+// ******************************************
+// la richiesta di uscita è servita con
+// questo protocollo, riceve uno USERNAME
+// e lo comunica al CHATTING PROCESS che
+// si coccupa di rimuoverlo
+// ******************************************
 void leave_chatroom_protocol_client(int sd, int p_father_sd){
   int ret, len;
   uint16_t lmsg;
@@ -493,12 +541,13 @@ void leave_chatroom_protocol_client(int sd, int p_father_sd){
   ret = recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
-  //RIMUOVO L'UTENTE DAL CHATTING PROCESS
+  //RIMUOVO L'UTENTE DALLA CHATTING ROOM
   printf("<LOG-M> Rimuovo lo USERNAME alla CHATROOM\n");
 
-  // *************
+  // ***************************************
   // comunico con il CHATTING process
-  // *************
+  // tramite le pipe
+  // ***************************************
   printf("<LOG-M> Invio la richiesta di LEAVE al CHATTING PROCESS\n");
   sprintf(buffer, "BEY");
   write(p_father_sd, buffer, REQ_LEN);
@@ -508,6 +557,16 @@ void leave_chatroom_protocol_client(int sd, int p_father_sd){
   write(p_father_sd, buffer, len32);
 }
 
+// **************************************************
+// quando un utente è aggiunto ad un gruppo, questo
+// non è forzato ad accedere alla chat.
+// per accedere ad un gruppo senza privare della
+// possibilità di mandare messaggi individuali ai membri
+// implemento la procedura di join:
+// se apro una chat con un utente, che mi ha aggiunto ad un gruppo,
+// posso fare la richiesta di sincronizzazione della chatroom
+// altrimenti continuo a scrivere solo a lui
+// **************************************************
 void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct user** chatroom_ref){
   int len, ret;
   uint16_t lmsg;
@@ -548,12 +607,18 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
   }
 }
 
+// ************************************************
+// In risposta ad una richiesta di join, devo valutare
+// se l'utente è nella chatroom o no.
+// In caso affermativo inizio a trasmettere tutti i nomi utente.
+// altrimenti chiudo la trasmissione.
+// ************************************************
 void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd){
   int ret;
   uint16_t lmsg;
   uint32_t len;
   char buffer[BUF_LEN];
-  char *username;//, *c_user;
+  char *username;
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Ricevo lo USERNAME\n");
@@ -565,6 +630,7 @@ void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd){
   sscanf(buffer, "%s", username);
 
   //VALUTO SE LO USERNAME E' NELLA CHATROOM
+  // contattando il CHATTING PROCESS tramite la PIPE
   printf("<LOG-M> VALUTO se l'utente che ha fatto RICHIESTA fa parte della CHATROOM\n");
   sprintf(buffer, "JNG");
   write(p_father_sd, buffer, REQ_LEN);
@@ -576,12 +642,12 @@ void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd){
   //INOLTRO UNA LISTA DI USERNAME (MANDO 0 PER CHIUDERE)
   printf("<LOG-M> Invio la lista degli USERNAME\n");
   while(1){
-    // RICEVO LA LUNGHEZZA DAL CHATTING PROTOCOL
+    // RICEVO LA LUNGHEZZA DAL CHATTING PROCESS
     // E LA INOLTRO TRAMITE SOCKET
     printf("<LOG-M> Leggo uno USERNAME dal CHATTING protocol\n");
     ret = read(p_son_sd, &len, sizeof(len));
     if(len == 0) break;
-    // RICEVO LA LO USERNAME DAL CHATTING PROTOCOL
+    // RICEVO LA LO USERNAME DAL CHATTING PROCESS
     // E LA INOLTRO TRAMITE SOCKET
     ret = read(p_son_sd, buffer, len);
     lmsg = htons(len);
@@ -595,6 +661,11 @@ void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd){
   ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
 }
 
+// **********************************************************************
+// Quando ricevo un messaggio non so su che port ascolta il mittente.
+// il protocollo per mandare gli ACK di ricezione ai messaggi,
+// passa attraverso il  server, che inoltra al mittente corretto l'ACK
+// **********************************************************************
 void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int seq_n){
   int ret, len;
   uint16_t lmsg;
@@ -629,6 +700,11 @@ void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int s
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
 }
 
+// ************************************************
+// ricevo la notifica di ricezione dal server
+// quindi ricevo uno username e un numero di sequenza.
+// Applico l'ACK al messaggio corretto.
+// ************************************************
 void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
   int ret, seq_n, len;
   uint16_t lmsg;

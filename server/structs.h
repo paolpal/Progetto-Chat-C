@@ -11,18 +11,6 @@ struct user_data{
   struct user_data *next;
 };
 
-struct signup_data{
-  char* username;
-  char* password;
-};
-
-struct protocol_info{
-  char activity[4];
-  int step;
-  int to_recive;
-  struct signup_data* signup_info;
-};
-
 struct hanging_msg{
   char *msg;
   char *send;
@@ -34,8 +22,6 @@ struct hanging_msg{
 
 struct destinatario{
   char *destinatario;
-  //int quanti;
-  //time_t *timestamp;
   struct hanging_msg *messaggi;
   struct destinatario *next;
 };
