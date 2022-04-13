@@ -23,11 +23,6 @@ int main(int argc, char const *argv[]) {
   fd_set master;
   fd_set read_fds;
 
-  //char *user;
-  //char *pw;
-
-  //struct protocol_info *connection = NULL;
-
   int fdmax;
 
   struct sockaddr_in my_addr, cl_addr;
@@ -60,8 +55,9 @@ int main(int argc, char const *argv[]) {
 
   fdmax = listener;
 
+  srand(time(NULL));
   printf("********************** SERVER AVVIATO **********************\n");
-
+  display_help_message();
   while(status == ON){
     read_fds = master;
     select(fdmax+1, &read_fds, NULL, NULL, NULL);
@@ -78,18 +74,18 @@ int main(int argc, char const *argv[]) {
         else if(i == fileno(stdin)){
           scanf("%s", buffer);
           if(strcmp(buffer,"list")==0) display_list(registro);
-          else if(strcmp(buffer,"msg")==0)prind_all_hanging_msg(destinatari);
-          else if(strcmp(buffer,"help")==0){} //display_help_mesage();
+          else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(destinatari);
+          else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
             status = OFF;
           } // procedura di shutdown: chiudi socket e tutto
         }
         else{
           ret = recv_all(i, (void*)buffer, REQ_LEN, 0);
-          //printf("%s\n", buffer);
           if(ret==0){
             printf("Client Disconnesso\n");
             fflush(stdout);
+            logout(&registro, find_user_by_socket(&registro,i));
             close(i);
             FD_CLR(i, &master);
             break;
@@ -117,6 +113,18 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"OUT")==0){
             printf("RICHIESTA DI LOGOUT\n");
             logout_protocol(i, &registro, buffer);
+          }
+          else if(strcmp(buffer,"GRP")==0){
+            printf("RICHIESTA DI GROUP\n");
+            group_protocol(i, &registro, buffer);
+          }
+          else if(strcmp(buffer,"MAK")==0){
+            printf("RICHIESTA DI MESSAGE ACK\n");
+            forw_msg_ack_protocol(i, &registro, buffer);
+          }
+          else if(strcmp(buffer,"ONL")==0){
+            printf("RICHIESTA DI ONLINE CHECK\n");
+            online_check_protocol(i, &registro, buffer);
           }
         }
       }

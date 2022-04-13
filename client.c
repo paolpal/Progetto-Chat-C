@@ -14,10 +14,9 @@
 #include "client/networking.h"
 #include "client/protocols.h"
 #include "client/chatting.h"
-#include "client/input.h"
 
 int main(int argc, char const *argv[]) {
-  int nump, ret, srv_sd, listener, newfd, i;
+  int nump, ret, srv_sd, listener, newfd, i, seq_n;
   int p_father_sd[2], p_son_sd[2];
   unsigned int addrlen;
 
@@ -45,6 +44,9 @@ int main(int argc, char const *argv[]) {
 
   int fdmax;
   int chatting = 0;
+  int logged = 0;
+
+  uint32_t len;
 
   if(argc<2){
     printf("Per avviare l'applicazione dichiara la porta su cui ricevere i messaggi.\nUtilizzo: ./dev <port>\n");
@@ -75,27 +77,18 @@ int main(int argc, char const *argv[]) {
   FD_SET(fileno(stdin), &master);
   FD_SET(listener, &master);
 
-  //sd = socket(AF_INET, SOCK_STREAM, 0);
-
   memset(&srv_addr, 0, sizeof(srv_addr));
   srv_addr.sin_family = AF_INET;
-  //srv_addr.sin_port = htons(4242);
   inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
 
-  /*ret = connect(sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
-  if(ret<0){
-    perror("Errore in fase di connessione\n");
-    exit(-1);
-  }*/
-
+  display_help_message();
   while (1) {
-    if(!chatting) printf("\r<menu> ");
-    fflush(stdout);
+    //if(!chatting) printf("\r<menu> ");
+    //fflush(stdout);
     read_fds = master;
     select(fdmax+1, &read_fds, NULL, NULL, NULL);
     for(i=0; i<=fdmax; i++){
       if(FD_ISSET(i, &read_fds)){
-        //printf("%d\n", i);
         if(i == listener){
           addrlen = sizeof(peer_addr);
           newfd = accept(listener, (struct sockaddr*)&peer_addr, &addrlen);
@@ -104,16 +97,27 @@ int main(int argc, char const *argv[]) {
             fdmax = newfd;
           }
         }
+        // la pipe ha senso consultarla solo se attiva la chat
+        // altrimenti contiene valori non specificati, non essendo inizializzata
         else if(chatting && i==p_son_sd[0]){
-          //printf("SONO QUA?\n");
-          read(p_son_sd[0], buffer, 4);
+          read(p_son_sd[0], buffer, REQ_LEN);
           if(strcmp(buffer,"MSG")==0){
-            printf("Sto archiviando i miei messaggi\n");
-            read(p_son_sd[0], buffer, BUF_LEN);
-            dest = strtok(buffer,":");
-            msg_text = &buffer[strlen(dest)+1];
-            msg = create_my_msg(dest, msg_text);
-            stampa_messaggio(msg);
+            // RICEVO LA LUNGHEZZA DELLO USERNAME
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            dest = (char*)malloc(len*sizeof(char));
+            // RICEVO LO USERNAME
+            read(p_son_sd[0], buffer, len);
+            strcpy(dest,buffer);
+            // RICEVO LA LUNGHEZZA DEL MESSAGGIO
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            // RICEVO IL MESSAGGIO
+            read(p_son_sd[0], buffer, len);
+            msg_text = buffer;
+            // RICEVO IL NUMERO DI SEQUENZA
+            read(p_son_sd[0], &len, sizeof(uint32_t));
+            seq_n = len;
+
+            msg = create_my_msg(dest, msg_text, seq_n);
             accoda_messaggio(&l_chat, msg);
           }
           else{
@@ -125,18 +129,19 @@ int main(int argc, char const *argv[]) {
           }
         }
         else if(i == fileno(stdin)){
-          //scanf("%s",buffer);
           fgets(buffer,BUF_LEN,stdin);
-          //printf("%s\n", buffer);
-          strtok(buffer, "\n"); //remove newline
-          //printf("%s\n", buffer);
+          // ************************************************
+          // tolgo il newline - non funziona se la stringa
+          // è "\n", ma il caso non ci interessa
+          // ************************************************
+          strtok(buffer, "\n");
           nump = parametrs_num(buffer);
           command = strtok(buffer," ");
-          //printf("%s %d %lu\n", command, nump, strlen(command));
-          if(strcmp(command,"signup")==0 && (nump == 3)){
-            //printf("RICHIESTA DI SIGNUP\n");
-            //scanf("%s %s", username, password);
-            //fgets(buffer,BUF_LEN,stdin);
+          if(!logged && strcmp(command,"signup")==0 && (nump == 3)){
+            // ************************************************
+            // strtok(NULL ... ) continua a riferirsi
+            // all'ultima stringa passata quindi buffer
+            // ************************************************
             number = strtok(NULL, " ");
             srv_port = atoi(number);
             username = strtok(NULL, " ");
@@ -147,74 +152,81 @@ int main(int argc, char const *argv[]) {
             if(signup_protocol_client(srv_sd, username, password)){
               printf("Iscrizione avvenuta con successo!\n");
             }
-            //free(username);
-            //free(password);
             close(srv_sd);
           }
-          else if(strcmp(command,"in")==0 && (nump == 3)){
-            //printf("RICHIESTA DI LOGIN\n");
-            //fgets(buffer,BUF_LEN,stdin);
+          // ************************************************
+          // il flag logged permete di invocare i comandi
+          // solo una volta che si è loggati
+          // e di non fare un login prima di aver fatto un logout
+          // ************************************************
+          else if(!logged && strcmp(command,"in")==0 && (nump == 3)){
+            logged = 1;
             number = strtok(NULL, " ");
             srv_port = atoi(number);
             token = strtok(NULL, " ");
             password = strtok(NULL, " ");
-            username = malloc((strlen(token)+1)*sizeof(char));
-            sprintf(username,"%s",token);
-            //sprintf(token,"%s",username);
+            // username contiene il nome utente dell'utente loggato
+            // deve essere permanente durante la sessione
+            // quindi gli alloco memoria
+            // strtok assegna solo l'indirizzo che punta alla parte del buffer
+            username = (char*) malloc((strlen(token)+1)*sizeof(char));
+            sprintf(username, "%s", token);
+            printf("<LOG> Apro una connessione TCP con il SERVER\n");
             srv_addr.sin_port = htons(srv_port);
             srv_sd = socket(AF_INET, SOCK_STREAM, 0);
             ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
-            //scanf("%hd %s %s", &port, username, password);
             if(login_protocol_client(srv_sd, username, password, lst_port)){
               printf("Login avvenuto con successo!\n");
             }
           }
-          else if(strcmp(command,"out")==0 && (nump == 0)){
+          else if(logged && strcmp(command,"out")==0 && (nump == 0)){
             printf("RICHIESTA DI LOGOUT\n");
-            //printf("CHECK CORRETTO\n");
-            //printf("%s\n", username);
             if(logout_protocol_client(srv_sd, username)){
               printf("Logout avvenuto con successo!\n");
               close(srv_sd);
+              logged = 0;
             }
           }
-          // il processo principale smette di scoltare sullo STDIN finche il processo di trasmissione noon termina
+          else if(strcmp(command,"help")==0) display_help_message();
+          // *******************************************************
+          // il processo principale smette di scoltare sullo STDIN
+          // finche il processo di trasmissione non termina
           // la notifica avviene tramite la chiusura della pipe
-          else if(strcmp(command,"chat")==0 && (nump == 1)){
-            //printf("RICHIESTA DI CHAT\n");
-            //scanf("%s", dest);
+          // *******************************************************
+          else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
             dest = strtok(NULL, " ");
-            pipe(p_son_sd);
-            pipe(p_father_sd);
-            chatting = 1;
-            print_chat(l_chat, dest);
-            FD_CLR(fileno(stdin), &master);
-            FD_SET(p_son_sd[0], &master);
-            if(p_son_sd[0]>fdmax){
-              fdmax = p_son_sd[0];
-            }
-            pid = fork();
-            if(pid == 0){
-              close(p_son_sd[0]);
-              close(p_father_sd[1]);
-              chat(srv_sd, p_son_sd[1], p_father_sd[0], username, dest);
+            if(is_in_addr_book(dest)){
+              pipe(p_son_sd);
+              pipe(p_father_sd);
+              chatting = 1;
+              print_chat(l_chat, dest);
+              FD_CLR(fileno(stdin), &master);
+              FD_SET(p_son_sd[0], &master);
+              if(p_son_sd[0]>fdmax){
+                fdmax = p_son_sd[0];
+              }
+              pid = fork();
+              if(pid == 0){
+                close(p_son_sd[0]);
+                close(p_father_sd[1]);
+                chat(srv_sd, p_son_sd[1], p_father_sd[0], username, dest);
+                close(p_son_sd[1]);
+                close(p_father_sd[0]);
+                exit(1);
+              }
               close(p_son_sd[1]);
               close(p_father_sd[0]);
-              exit(1);
             }
-            close(p_son_sd[1]);
-            close(p_father_sd[0]);
+            else printf("Utente non in RUBRICA\n");
           }
-          else if(strcmp(command,"hanging")==0 && (nump == 0)){
-            //printf("RICHIESTA DI HANGING\n");
+          else if(logged && strcmp(command,"hanging")==0 && (nump == 0)){
             hanging_protocol_client(srv_sd, username);
           }
-          else if(strcmp(command,"show")==0 && (nump == 1)){
-            //printf("RICHIESTA DI SHOW\n");
+          else if(logged && strcmp(command,"show")==0 && (nump == 1)){
             sender = strtok(NULL, " ");
             show_protocol_client(srv_sd, username, sender, &l_chat);
           }
-          else if(strcmp(command,"bey")==0){
+          else if(strcmp(command,"esc")==0){
             printf("Arrivederci\n");
             close(listener);
             exit(0);
@@ -224,20 +236,44 @@ int main(int argc, char const *argv[]) {
         else {
           ret = recv_all(i, (void*)buffer, REQ_LEN, 0);
           if(ret==0){
-            //printf("Peer Disconnesso\n");
             fflush(stdout);
             close(i);
             FD_CLR(i, &master);
             break;
           }
+          //RICHIESTE DAI PEER O DAL SERVER
+          // MSG : avvio la procedura di ricezione di un messaggio
+          // MAK : avvio il protocollo di ricezione di un ack di ricezione
+          // ADD : avvio il protocollo per l'aggiunta di un utente alla chatroom
+          // SHR : avvio il protocollo di ricezione di un file
+          // BEY : avvio il protocollo di rimozione di un utente che ha abbamdonato la chatroom
+          // JNG : avvio il protocollo di sincronizzazione della chatroom
+
+          // le comunicazioni su pipe avvengono con le stesse modalità delle socket:
+          // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           if(strcmp(buffer, "MSG")==0){
-            //printf("Messaggio ricevuto\n");
-            //printf("RICHIESTA DI MESSAGGIO\n");
-            recv_msg(i, p_father_sd[1], p_son_sd[0], chatting, &l_chat, buffer);
+            printf("<LOG-M> Ricevo richiesta di MESSAGE\n");
+            recv_msg(srv_sd, i, p_father_sd[1], p_son_sd[0], chatting, username, &l_chat, buffer);
+          }
+          else if(strcmp(buffer, "MAK")==0){
+            printf("<LOG-M> Ricevo richiesta di MESSAGE ACK\n");
+            recv_msg_ack_protocol_client(i, &l_chat);
+          }
+          else if(strcmp(buffer, "ADD")==0){
+            printf("<LOG-M> Ricevo richiesta di ADD USER\n");
+            add_user_protocol_client(i, p_father_sd[1], chatting);
           }
           else if(strcmp(buffer, "SHR")==0){
-            //printf("RICEZIONE FILE\n");
+            printf("<LOG-M> Ricevo richiesta di SHARE FILE\n");
             receive_file_protocol_client(i);
+          }
+          else if(strcmp(buffer, "BEY")==0){
+            printf("<LOG-M> Ricevo richiesta di LEAVE\n");
+            leave_chatroom_protocol_client(i, p_father_sd[1], chatting);
+          }
+          else if(strcmp(buffer, "JNG")==0){
+            printf("<LOG-M> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
+            join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0], chatting);
           }
         }
       }

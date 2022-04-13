@@ -1,12 +1,9 @@
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
+#include "../networking.h"
+
+// ****************************************************
+// le funzioni send_all(...) e recv_all(...) assicurano
+// che la trasmissione e la ricezione siano complete
+// ****************************************************
 
 int send_all(int socket, void *buffer, size_t length, int flags){
   int sent = 0;
