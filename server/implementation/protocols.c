@@ -298,7 +298,7 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   // cerco la lista di messaggi pendenti per il destinatario
   l_msg_ref = find_pending_msg(destinatari, dest);
 
-  //rimuovo il primo messaggio del mittente dalla lista in ciclo
+  // rimuovo il primo messaggio del mittente dalla lista in ciclo
   // finche non ne resta nessuno
   // termino quando ritorno NULL
   while((msg = remove_msg(l_msg_ref, sender))!=NULL){

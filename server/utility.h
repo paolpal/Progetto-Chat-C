@@ -8,14 +8,14 @@
 #include <unistd.h>
 #include <time.h>
 
+#ifndef _UTILITY_H_
+#define _UTILITY_H_
+
 #include "structs.h"
 #include "protocols.h"
 #include "networking.h"
 #include "constants.h"
 #include "structs.h"
-
-#ifndef _UTILITY_H_
-#define _UTILITY_H_
 
 void display_help_message();
 int login_check(char *user, char *pw);

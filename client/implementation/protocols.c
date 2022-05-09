@@ -635,7 +635,7 @@ void join_chatroom_protocol_client(int sd, int p_father_sd, int p_son_sd, int ch
 
   //SE IL CHATTING PROCESS E' ATTIVO
   if(chatting){
-    //VALUTO SE LO USERNAME E' NELLA CHATROOM
+    // VALUTO SE LO USERNAME E' NELLA CHATROOM
     // contattando il CHATTING PROCESS tramite la PIPE
     printf("<LOG-M> VALUTO se l'utente che ha fatto RICHIESTA fa parte della CHATROOM\n");
     sprintf(buffer, "JNG");
