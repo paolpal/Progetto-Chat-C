@@ -12,28 +12,28 @@
 #define _CLIENT_STRUCT_H_
 
 struct contatto{
-  char *user;
+  char user[50];
   short port;
   struct sockaddr_in addr;
 };
 
 struct msg{
-  char *text;
-  char *sender;
+  char text[BUF_LEN];
+  char sender[50];
   int ACK;
   int seq_n;
-  char *dest;
+  char dest[50];
   struct msg *next;
 };
 
 struct chat{ // chat - mittente
-  char *user; // user - mittente
+  char name[50]; // user - mittente
   struct msg *l_msg;
   struct chat *next;
 };
 
 struct user{
-  char* username;
+  char name[50];
   int cht_sd;
   int next_seq_n;
   struct sockaddr_in addr;
