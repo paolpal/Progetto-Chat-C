@@ -52,21 +52,8 @@ void chat(int srv_sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_us
           // le comunicazioni su pipe avvengono con le stesse modalità delle socket:
           // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           read(p_father_sd, buffer, REQ_LEN);
-          if(strcmp(buffer,"CHK")==0){
-            printf("<LOG-C> Ricevo la richiesta di CHECK dal MAIN PROCESS\n");
-            printf("<LOG-C> Leggo uno USERNAME dal MAIN PROCESS\n");
-            read(p_father_sd, &len, sizeof(uint32_t));
-            read(p_father_sd, buffer, len);
-            printf("<LOG-C> Controllo se è nella CHATROOM\n");
-            if(chatting_with(buffer, chatroom)) {
-              write(p_son_sd,"1\0", 2);
-            }
-            else {
-              write(p_son_sd,"0\0", 2);
-            }
-            printf("<LOG-C> Scrivo la valutazione al MAIN PROCESS\n");
-          }
-          else if(strcmp(buffer,"ADD")==0){
+
+          if(strcmp(buffer,"ADD")==0){
             printf("<LOG-C> Ricevo richiesta di ADD dal MAIN PROCESS\n");
             printf("<LOG-C> Leggo uno USERNAME dal MAIN PROCESS\n");
             read(p_father_sd, &len, sizeof(uint32_t));
@@ -289,15 +276,7 @@ void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chattin
 
   //COMUNICO CON IL CHATTING PROCESS SE ATTIVO
   if(chatting){
-    printf("<LOG-M> Invio la richiesta di CHECK al CHATTING PROCESS\n");
-    sprintf(buffer, "CHK");
-    write(p_father_sd, buffer, REQ_LEN);
-    len_t = strlen(msg->sender)+1;
-    write(p_father_sd, &len_t, sizeof(uint32_t));
-    write(p_father_sd, msg->sender, len_t);
-    printf("<LOG-M> Leggo la valutazione del CHATTING PROCESS\n");
-    read(p_son_sd, buffer, 2);
-    if(strcmp(buffer, "1")==0)
+    if(chatting_with(msg->sender, chatroom))
       stampa_messaggio(msg);
   }
   // Inserisco il messaggio nella chat associata
