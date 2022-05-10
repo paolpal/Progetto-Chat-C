@@ -479,10 +479,6 @@ void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, 
   //AGGIUNGO L'UTENTE AL CHATTING PROCESS
   printf("<LOG-M> Aggiungo lo USERNAME alla CHATROOM\n");
 
-  // ***************************************
-  // comunico con il CHATTING process
-  // tramite le pipe
-  // ***************************************
   if(chatting){
     if(strcmp(c_username, username)!=0){
       printf("<LOG-C> Aggiungo lo username alla CHATROOM\n");
