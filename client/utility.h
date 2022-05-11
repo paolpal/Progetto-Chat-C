@@ -26,5 +26,7 @@ void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n);
 int is_in_addr_book(char* username);
 int is_online(int srv_sd, char* username);
 int parametrs_num(char* str);
+void load_chats(struct chat** l_chats_ref);
+void save_chats(struct chat* l_chats);
 
 #endif

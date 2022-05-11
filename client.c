@@ -16,8 +16,15 @@
 #include "client/chatting.h"
 
 int main(int argc, char const *argv[]) {
-  int srv_sd, fdmax, logged, nump;
+  int ret, srv_sd, listener, fdmax, logged, nump, newfd, i, seq_n;
+  unsigned int addrlen;
+
   struct sockaddr_in srv_addr, my_addr, peer_addr;
+  struct chat *l_chat = NULL;
+  struct msg* msg;
+
+  struct user* chatroom = NULL;
+  struct user* user = NULL;
 
   char buffer[BUF_LEN];
   char msg_b[BUF_LEN];
@@ -29,6 +36,8 @@ int main(int argc, char const *argv[]) {
   char *command;
   char *number;
   char *filename;
+  char cmd[6];
+  char sh_cmd[3];
 
   short srv_port, lst_port;
 
@@ -216,7 +225,7 @@ int main(int argc, char const *argv[]) {
               strcpy(msg_b, buffer);
               while(user!=NULL){
                 // Se ho aperto una socket con l'utente destinatario, mando il messaggio
-                // altrimenti contatto il server per aprire una nuova comunicazione
+                // altrimenti contact il server per aprire una nuova comunicazione
                 if(user->cht_sd != 0){
                   send_msg(user->cht_sd, my_user, msg_b, user->next_seq_n);
                 }
@@ -225,7 +234,7 @@ int main(int argc, char const *argv[]) {
                 }
 
                 msg = create_my_msg(user->username, msg_b, user->next_seq_n);
-                accoda_messaggio(&l_chat, msg);
+                add_msg(&l_chat, msg);
                 //incremento il numero sequenziale del messaggio
                 user->next_seq_n++;
                 user = user->next;

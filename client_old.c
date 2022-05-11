@@ -262,7 +262,7 @@ int main(int argc, char const *argv[]) {
               strcpy(msg, buffer);
               while(user!=NULL){
                 // Se ho aperto una socket con l'utente destinatario, mando il messaggio
-                // altrimenti contatto il server per aprire una nuova comunicazione
+                // altrimenti contact il server per aprire una nuova comunicazione
                 if(user->cht_sd != 0){
                   send_msg(user->cht_sd, my_user, msg, user->next_seq_n);
                 }
@@ -271,7 +271,7 @@ int main(int argc, char const *argv[]) {
                 }
 
                 msg = create_my_msg(user->username, msg_b, user->next_seq_n);
-                accoda_messaggio(&l_chat, msg);
+                add_msg(&l_chat, msg);
                 //incremento il numero sequenziale del messaggio
                 user->next_seq_n++;
                 user = user->next;

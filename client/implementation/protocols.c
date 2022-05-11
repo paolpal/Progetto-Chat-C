@@ -321,8 +321,8 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     msg->next = NULL;
     msg->seq_n = seq_n;
 
-    accoda_messaggio(l_chat, msg);
-    stampa_messaggio(msg);
+    add_msg(l_chat, msg);
+    print_msg(msg);
   }
   printf("<LOG-M> Fine ricezione\n");
 }
@@ -457,7 +457,7 @@ void add_user_request_protocol_client(int cht_sd, char* username){
 
 // **************************************************
 // in risposta alla richiesta di aggiunta, ricevo il
-// nome utente e contatto il CHATTING PROCESS per
+// nome utente e contact il CHATTING PROCESS per
 // aggiungerlo alla CHATROOM...
 // **************************************************
 void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, char* c_username){

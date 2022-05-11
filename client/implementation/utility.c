@@ -74,9 +74,9 @@ struct msg* create_my_msg(char* dest, char* text, int seq_n){
   struct msg* msg = (struct msg*)malloc(sizeof(struct msg));
   msg->sender = NULL;
   msg->ACK = 0;
-  msg->dest = (char*) malloc((strlen(dest)+1)*sizeof(char));
+  //msg->dest = (char*) malloc((strlen(dest)+1)*sizeof(char));
   strcpy(msg->dest,dest);
-  msg->text = (char*) malloc((strlen(text)+1)*sizeof(char));
+  //msg->text = (char*) malloc((strlen(text)+1)*sizeof(char));
   strcpy(msg->text, text);
   msg->seq_n = seq_n;
   return msg;
@@ -164,7 +164,7 @@ int is_in_addr_book(char* username){
 
 // *************************************
 // per verificare che l'utente specificato
-// sia online, contatto il server con
+// sia online, contact il server con
 // l'apposita procedura
 // *************************************
 int is_online(int srv_sd, char* username){
@@ -185,4 +185,86 @@ int parametrs_num(char* str){
       ptr++;
   }
   return count;
+}
+
+void save_chats(struct chat* l_chats){
+  FILE* chat_file_p;
+  FILE* msg_file_p;
+  char *filename;
+
+  int len;
+
+  struct chat* next_chat;
+  struct msg* next_msg;
+
+  struct chat* c_chat = l_chats;
+
+  chat_file_p = fopen ("chats.dat", "w");
+  if(chat_file_p == NULL){
+    return;
+  }
+  while(c_chat!=NULL){
+    len = strlen(c_chat->name)+4;
+    filename = (*char)malloc(len*sizeof(char));
+    sprintf(filename,"%s.dat",c_chat->name);
+    msg_file_p = fopen (filename, "w");
+    free(filename);
+    if(msg_file_p != NULL){
+      struct msg *c_msg = c_chat->l_msg;
+      while(c_msg!=NULL){
+        next_msg = c_msg->next;
+        c_msg->next = NULL;
+        fwrite (c_msg, sizeof(struct msg), 1, msg_file_p);
+        c_msg = next_msg;
+      }
+      fclose(msg_file_p);
+    }
+    next_chat = c_chat->next;
+    c_chat->next = NULL;
+    c_chat->l_msg = NULL;
+    fwrite (c_chat, sizeof(struct chat), 1, chat_file_p);
+    c_chat = next_chat;
+  }
+  fclose(chat_file_p);
+}
+
+void load_chats(struct chat** l_chats_ref){
+  FILE* chat_file_p;
+  FILE* msg_file_p;
+  char *filename;
+
+  int len;
+
+  struct chat in_chat;
+  struct char* new_chat;
+  struct msg in_msg;
+  struct msg* new_msg;
+
+  chat_file_p = fopen ("chats.dat", "r");
+  if(chat_file_p == NULL){
+    return;
+  }
+
+  while(fread(&in_chat, sizeof(struct chat), 1, chat_file_p)){
+    len = strlen(in_chat->name)+4;
+    filename = (*char)malloc(len*sizeof(char));
+    sprintf(filename,"%s.dat",in_chat->name);
+    msg_file_p = fopen (filename, "r");
+    free(filename);
+
+    if(msg_file_p!=NULL){
+      new_chat = (struct chat*) malloc(sizeof(struct chat));
+      copy_chat(new_chat, &in_chat);
+
+      while(fread(&in_msg, sizeof(struct msg), 1, msg_file_p)){
+        new_msg = (struct msg*) malloc(sizeof(struct msg));
+        copy_msg(new_msg, &in_msg);
+        push_msg(&new_chat->l_msg, new_msg);
+      }
+      fclose(msg_file_p);
+    }
+    push_chat(l_chats_ref, new_chat);
+
+  }
+  fclose(chat_file_p);
 }
