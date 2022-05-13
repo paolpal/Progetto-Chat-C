@@ -11,6 +11,8 @@
 #ifndef _CLIENT_STRUCT_H_
 #define _CLIENT_STRUCT_H_
 
+#include "constants.h"
+
 struct contact{
   char user[S_BUF_LEN];
   short port;

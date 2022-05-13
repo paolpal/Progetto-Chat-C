@@ -30,10 +30,10 @@ int login(struct user_data** head_ref, char *user, char *pw, short port, int sd)
 int logout(struct user_data** head_ref, char *user);
 int find_port(struct user_data** head_ref, char *username);
 int is_online(struct user_data** head_ref, char *username);
-struct hanging_msg** append_dest(struct destinatario** head_ref, char* username);
-struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* username);
+struct hanging_msg** append_dest(struct chat** head_ref, char* username);
+struct hanging_msg** find_pending_msg(struct chat** head_ref, char* username);
 void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n);
-void prind_all_hanging_msg(struct destinatario* head);
+void prind_all_hanging_msg(struct chat* head);
 void find_sender(struct hanging_msg* msg_head, struct sender** sender_head_ref);
 void add_one_msg(struct sender** sender_head_ref, char* username);
 void append_sender(struct sender** sender_head_ref, char* username);

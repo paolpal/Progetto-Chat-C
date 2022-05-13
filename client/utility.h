@@ -14,8 +14,8 @@
 #include "structs.h"
 #include "protocols.h"
 
-struct user* append_user(struct user** head_ref, char* username);
-struct msg* create_my_msg(char* dest, char* text, int seq_n);
+struct user* append_user(struct user** chatroom_ref, char* username);
+struct msg* create_my_msg(char* dest, char* my_username, char* text, int seq_n);
 void print_chatroom(struct user* chatroom);
 int chatting_with(char *buffer,struct user * chat_head);
 void remove_user(struct user** chatroom, char* username);

@@ -46,19 +46,20 @@ void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
 // messaggio, e in ogni caso lo inserisce nella chat
 // E' invocata dal MAIN PROCESS
 // *********************************************
-void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chatting, char* my_user, struct chat** ricevuti, char* buffer){
+void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat** ricevuti, struct user** chatroom_ref){
   uint16_t lmsg;
-  uint32_t len_t;
   int len;
+  char buffer[BUF_LEN];
+
   struct msg* msg = (struct msg*) malloc(sizeof(struct msg));
 
-  msg->dest = NULL;
+  //msg->dest = NULL;
+  strncpy(msg->dest, my_user, S_BUF_LEN);
 
   //RICEVO LA LUNGHEZZA DEL MITTENTE
   printf("<LOG-M> Ricevo lo USERNAME mittente\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  msg->sender = (char*) malloc(len*sizeof(char));
   msg->next = NULL;
   //RICEVO IL MITTENTE
   recv_all(cht_sd, (void*)buffer, len, 0);
@@ -68,7 +69,6 @@ void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chattin
   printf("<LOG-M> Ricevo il MESSAGGIO\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  msg->text = (char*) malloc(len*sizeof(char));
   //RICEVO IL MESSAGGIO
   recv_all(cht_sd, (void*)buffer, len, 0);
   strcpy(msg->text,buffer);
@@ -83,21 +83,21 @@ void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chattin
 
   //COMUNICO CON IL CHATTING PROCESS SE ATTIVO
   if(chatting){
-    if(chatting_with(msg->sender, chatroom))
-      print_msg(msg);
+    if(chatting_with(msg->sender, *chatroom_ref))
+      print_msg(msg, my_user);
   }
   // Inserisco il messaggio nella chat associata
-  add_msg(ricevuti, msg);
-
+  add_msg(ricevuti, msg, my_user);
 }
 
-void add_msg(struct chat **l_chat, struct msg *msg){
-  char* find = (msg->sender==NULL)? msg->dest:msg->sender;
+void add_msg(struct chat **l_chat, struct msg *msg, char* my_user){
+  //char* find = (msg->sender==NULL)? msg->dest:msg->sender;
+  char* find = (strncmp(msg->sender, my_user, S_BUF_LEN))? msg->dest:msg->sender;
   struct chat *c_chat = *l_chat;
   while(c_chat!=NULL){
     // cerco la chat associata all'utente specificato
     // se il messaggio lo ho scritto io msg->sender sarà NULL
-    if(strcmp(c_chat->user, find)==0){
+    if(strncmp(c_chat->name, find, S_BUF_LEN)==0){
       push_msg(&c_chat->l_msg, msg);
       return;
     }
@@ -116,19 +116,10 @@ void add_chat(struct chat **l_chat, char* user){
   int len;
   struct chat *new_chat  = (struct chat*) malloc(sizeof(struct chat));
   len = strlen(user)+1;
-  new_chat->user = (char*) malloc(len * sizeof(char));
-  strcpy(new_chat->user, user);
+  strncpy(new_chat->name, user, S_BUF_LEN);
   new_chat->l_msg=NULL;
   new_chat->next = (*l_chat);
   (*l_chat) = new_chat;
-}
-
-void push_chat(struct chat **l_chat, struct chat *chat){
-  if(*l_chat==NULL){
-    chat->next = (*l_chat);
-    (*l_chat) = chat;
-  }
-  else push_chat(&(*l_chat)->next, chat);
 }
 
 // ******************************************
@@ -143,14 +134,22 @@ void push_msg(struct msg **l_msg, struct msg *msg){
   else push_msg(&(*l_msg)->next, msg);
 }
 
+void push_chat(struct chat **l_chat, struct chat *chat){
+  if(*l_chat==NULL){
+    chat->next = (*l_chat);
+    (*l_chat) = chat;
+  }
+  else push_chat(&(*l_chat)->next, chat);
+}
+
 // ******************************************
 // stampo il messaggio nei formati:
 // mittente : messaggio <-> messaggio ricevuto
 // * messaggio <-> spedito, non consegnato
 // ** messaggio <-> spedito e consegnato
 // ******************************************
-void print_msg(struct msg *msg){
-  if(msg->sender != NULL)
+void print_msg(struct msg *msg, char* my_username){
+  if(strncmp(msg->sender, my_username, S_BUF_LEN)!=0)
     printf("\r%s : %s", msg->sender, msg->text);
   else{
     if(msg->ACK==0) printf("\r* %s", msg->text);
@@ -162,14 +161,14 @@ void print_msg(struct msg *msg){
 // *********************************************
 // Stampa ogni messaggio della chat specificata
 // *********************************************
-void print_chat(struct chat *l_chat, char* user){
+void print_chat(struct chat *l_chat, char* user, char* my_user){
   struct chat *c_chat = l_chat;
   struct msg *c_msg;
   while(c_chat!=NULL){
-    if(strcmp(c_chat->user, user)==0){
+    if(strcmp(c_chat->name, user)==0){
       c_msg = c_chat->l_msg;
       while(c_msg!=NULL){
-        print_msg(c_msg);
+        print_msg(c_msg, my_user);
         c_msg = c_msg->next;
       }
     }
@@ -185,6 +184,6 @@ void copy_msg(struct msg *dest_msg_r, struct msg* source_msg_r){
   dest_msg_r->seq_n = source_msg_r->seq_n;
 }
 
-void copy_chat(struct chat *dest_chat_r, struct msg* source_chat_r){
-  strncpy(dest_msg_r->name, source_msg_r->name, S_BUF_LEN);
+void copy_chat(struct chat *dest_chat_r, struct chat* source_chat_r){
+  strncpy(dest_chat_r->name, source_chat_r->name, S_BUF_LEN);
 }

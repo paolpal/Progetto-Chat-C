@@ -267,10 +267,10 @@ int main(int argc, char const *argv[]) {
                   send_msg(user->cht_sd, my_user, msg, user->next_seq_n);
                 }
                 else {
-                  user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->username, &user->addr, msg, &user->next_seq_n);
+                  user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->name, &user->addr, msg, &user->next_seq_n);
                 }
 
-                msg = create_my_msg(user->username, msg_b, user->next_seq_n);
+                msg = create_my_msg(user->name, msg_b, user->next_seq_n);
                 add_msg(&l_chat, msg);
                 //incremento il numero sequenziale del messaggio
                 user->next_seq_n++;

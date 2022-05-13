@@ -139,7 +139,7 @@ void logout_protocol(int i, struct user_data** utenti, char* buffer){
 // ne assegna uno randomico e lo restituisce
 // al mittente.
 // ****************************************
-void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** destinatari,  char* buffer){
+void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinatari,  char* buffer){
   char *dest, *send, *msg;
   uint16_t lmsg;
   int len, seq_n;
@@ -153,6 +153,8 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", dest);
 
+  printf("<LOG> Ricevo il nome destinatario: %s\n", dest);
+
   //RICEVO LA LUNGHEZZA DEL NOME MITTENTE
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
@@ -161,6 +163,8 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", send);
 
+  printf("<LOG> Ricevo il nome mittente: %s\n", send);
+
   //RICEVO LA LUNGHEZZA DEL MESSAGGIO
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
@@ -168,6 +172,8 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   //RICEVO IL MESSAGGIO
   recv_all(i, (void*)buffer, len, 0);
   strcpy(msg, buffer);
+
+  printf("<LOG> Ricevo il messaggio\n");
 
   //RICEVO IL NUMERO DI SEQUENZA
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
@@ -180,17 +186,22 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
     send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
   }
 
+  printf("<LOG> Cerco il destinatario\n");
+
   // ricerco il destinatario tra gli utenti online
   port = find_port(utenti, dest);
+  printf("<LOG> Fine ricerca\n");
   //lo trovo : inoltro
   int rep = 0;
   int forwarded = 0;
   if(port!=0) while(!forwarded && rep < 3) {
+    printf("<LOG> Inoltro #%d a %d\n", rep, port);
     forwarded = forward_msg(port, send, seq_n, msg);
     rep++;
   }
   //NON lo trovo : appendo
   else {
+    printf("<LOG> Appendo\n");
     struct hanging_msg** msg_list_ref;
     msg_list_ref = find_pending_msg(destinatari, dest);
     append_msg(msg_list_ref, dest, send, msg, seq_n);
@@ -199,6 +210,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
   //rispondo sempre con la porta: se non l'ho trovata contiene ZERO
   lmsg = htons(port);
   send_all(i,(void*) &lmsg, sizeof(uint16_t), 0);
+  printf("<LOG> Rispondo con l'esito\n");
 }
 
 // ********************************************
@@ -206,7 +218,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct destinatario** d
 // e restituisce l'elenco di utenti che hanno contattato
 // con numero di messaggi e timestamp del messaggio più recente
 // ********************************************
-void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
+void hanging_protocol(int i, struct chat** destinatari, char* buffer){
   char *dest;
   uint16_t lmsg;
   int len, ret;
@@ -268,7 +280,7 @@ void hanging_protocol(int i, struct destinatario** destinatari, char* buffer){
 // quindi manda i messaggi del mittente al
 // destinatario in ordine di ricezzione
 // ****************************************
-void show_protocol(int i, struct destinatario** destinatari, char* buffer){
+void show_protocol(int i, struct chat** destinatari, char* buffer){
   char *dest;
   char *sender;
   uint16_t lmsg;
@@ -303,11 +315,11 @@ void show_protocol(int i, struct destinatario** destinatari, char* buffer){
   // termino quando ritorno NULL
   while((msg = remove_msg(l_msg_ref, sender))!=NULL){
     //INVIO LA LUNGHEZZA DEL MESSAGGIO
-    len = strlen(msg->msg)+1;
+    len = strlen(msg->text)+1;
     lmsg = htons(len);
     ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
     //INVIO IL MESSAGGIO
-    sprintf(buffer,"%s", msg->msg);
+    sprintf(buffer,"%s", msg->text);
     ret = send_all(i, (void*) buffer, len, 0);
     //INVIO IL NUMERO SEQUENZIALE
     lmsg = htons(msg->seq_n);

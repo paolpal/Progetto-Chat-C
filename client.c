@@ -16,7 +16,7 @@
 #include "client/chatting.h"
 
 int main(int argc, char const *argv[]) {
-  int ret, srv_sd, listener, fdmax, logged, nump, newfd, i, seq_n;
+  int ret, srv_sd, listener=0, fdmax, nump, newfd, i;
   unsigned int addrlen;
 
   struct sockaddr_in srv_addr, my_addr, peer_addr;
@@ -36,6 +36,7 @@ int main(int argc, char const *argv[]) {
   char *command;
   char *number;
   char *filename;
+  //char *token;
   char cmd[6];
   char sh_cmd[3];
 
@@ -74,7 +75,7 @@ int main(int argc, char const *argv[]) {
 
   fdmax = fileno(stdin);
 
-  load_chats();
+  load_chats(&l_chat);
   display_help_message();
 
   while(1){
@@ -83,6 +84,7 @@ int main(int argc, char const *argv[]) {
     for(i=0; i<=fdmax; i++){
       if(FD_ISSET(i, &read_fds)){
         if(logged && i == listener){
+          printf("<LOG> Ricevuta una connessione.\n");
           addrlen = sizeof(peer_addr);
           newfd = accept(listener, (struct sockaddr*)&peer_addr, &addrlen);
           FD_SET(newfd, &master);
@@ -110,21 +112,30 @@ int main(int argc, char const *argv[]) {
             else if(!logged && strcmp(command,"in")==0 && (nump == 3)){
               number = strtok(NULL, " ");
               lst_port = atoi(number);
-              token = strtok(NULL, " ");
+              username = strtok(NULL, " ");
               password = strtok(NULL, " ");
               // username contiene il nome utente dell'utente loggato
               // deve essere permanente durante la sessione
               // quindi gli alloco memoria
               // strtok assegna solo l'indirizzo che punta alla parte del buffer
-              sprintf(logged_username, "%s", token);
+              sprintf(logged_username, "%s", username);
               printf("<LOG> Apro una connessione TCP con il SERVER\n");
               if(login_protocol_client(srv_sd, username, password, lst_port)){
                 printf("Login avvenuto con successo!\n");
                 logged = 1;
+                listener = socket(AF_INET, SOCK_STREAM, 0);
+                memset(&my_addr, 0, sizeof(my_addr));
+                my_addr.sin_family = AF_INET;
+                my_addr.sin_addr.s_addr = INADDR_ANY;
                 my_addr.sin_port = htons(lst_port);
                 ret = bind(listener, (struct sockaddr*)&my_addr, sizeof(my_addr));
                 if(ret < 0){
-                  perror("Bind non riuscita");
+                  perror("Bind non riuscita: ");
+                  exit(0);
+                }
+                ret = listen(listener, 10);
+                if(ret < 0){
+                  perror("Bind non riuscita: ");
                   exit(0);
                 }
               }
@@ -142,7 +153,8 @@ int main(int argc, char const *argv[]) {
               dest = strtok(NULL, " ");
               if(is_in_addr_book(dest)){
                 chatting = 1;
-                print_chat(l_chat, dest);
+                print_chat(l_chat, dest, logged_username);
+                append_user(&chatroom, dest);
               }
               else printf("Utente non in RUBRICA\n");
             }
@@ -169,7 +181,8 @@ int main(int argc, char const *argv[]) {
               user = chatroom;
               while(user!=NULL){
                 if(user->cht_sd != 0){
-                  leave_chatroom_request_protocol_client(user->cht_sd, my_user);
+                  leave_chatroom_request_protocol_client(user->cht_sd, logged_username);
+                  close(user->cht_sd);
                 }
                 user = user->next;
               }
@@ -182,7 +195,7 @@ int main(int argc, char const *argv[]) {
               // nel caso solito di utilizzo, solo ad un menbro.
               while(user!=NULL){
                 if(user->cht_sd != 0){
-                  join_chatroom_request_protocol_client(user->cht_sd, my_user, &chatroom);
+                  join_chatroom_request_protocol_client(user->cht_sd, logged_username, &chatroom);
                 }
                 user = user->next;
               }
@@ -227,14 +240,14 @@ int main(int argc, char const *argv[]) {
                 // Se ho aperto una socket con l'utente destinatario, mando il messaggio
                 // altrimenti contact il server per aprire una nuova comunicazione
                 if(user->cht_sd != 0){
-                  send_msg(user->cht_sd, my_user, msg_b, user->next_seq_n);
+                  send_msg(user->cht_sd, logged_username, msg_b, user->next_seq_n);
                 }
                 else {
-                  user->cht_sd = new_chat_protocol_client(srv_sd, my_user, user->username, &user->addr, msg_b, &user->next_seq_n);
+                  user->cht_sd = new_chat_protocol_client(srv_sd, logged_username, user->name, &user->addr, msg_b, &user->next_seq_n);
                 }
 
-                msg = create_my_msg(user->username, msg_b, user->next_seq_n);
-                add_msg(&l_chat, msg);
+                msg = create_my_msg(user->name, logged_username, msg_b, user->next_seq_n);
+                add_msg(&l_chat, msg, logged_username);
                 //incremento il numero sequenziale del messaggio
                 user->next_seq_n++;
                 user = user->next;
@@ -261,35 +274,35 @@ int main(int argc, char const *argv[]) {
           // le comunicazioni su pipe avvengono con le stesse modalità delle socket:
           // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           if(strcmp(buffer, "MSG")==0){
-            printf("<LOG-M> Ricevo richiesta di MESSAGE\n");
-            recv_msg(srv_sd, i, p_father_sd[1], p_son_sd[0], chatting, username, &l_chat, buffer);
+            printf("<LOG> Ricevo richiesta di MESSAGE\n");
+            recv_msg(srv_sd, i, chatting, username, &l_chat, &chatroom);
           }
           else if(strcmp(buffer, "MAK")==0){
-            printf("<LOG-M> Ricevo richiesta di MESSAGE ACK\n");
+            printf("<LOG> Ricevo richiesta di MESSAGE ACK\n");
             recv_msg_ack_protocol_client(i, &l_chat);
           }
           else if(strcmp(buffer, "ADD")==0){
-            printf("<LOG-M> Ricevo richiesta di ADD USER\n");
-            add_user_protocol_client(i, p_father_sd[1], chatting);
+            printf("<LOG> Ricevo richiesta di ADD USER\n");
+            add_user_protocol_client(i, &chatroom, chatting, logged_username);
           }
           else if(strcmp(buffer, "SHR")==0){
-            printf("<LOG-M> Ricevo richiesta di SHARE FILE\n");
+            printf("<LOG> Ricevo richiesta di SHARE FILE\n");
             receive_file_protocol_client(i);
           }
           else if(strcmp(buffer, "BEY")==0){
-            printf("<LOG-M> Ricevo richiesta di LEAVE\n");
-            leave_chatroom_protocol_client(i, p_father_sd[1], chatting);
+            printf("<LOG> Ricevo richiesta di LEAVE\n");
+            leave_chatroom_protocol_client(i, &chatroom, chatting);
           }
           else if(strcmp(buffer, "JNG")==0){
-            printf("<LOG-M> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
-            join_chatroom_protocol_client(i, p_father_sd[1],  p_son_sd[0], chatting);
+            printf("<LOG> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
+            join_chatroom_protocol_client(i, &chatroom, chatting);
           }
         }
       }
     }
   }
 
-  save_chats();
+  save_chats(l_chat);
   close(srv_sd);
   return 0;
 }

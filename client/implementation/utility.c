@@ -9,15 +9,14 @@ struct user* append_user(struct user** chatroom, char* username){
   if(*chatroom==NULL){
     new_user = (struct user*)malloc(sizeof(struct user));
     len = strlen(username)+1;
-    new_user->username = (char*) malloc(len*sizeof(char));
-    strcpy(new_user->username, username);
+    strcpy(new_user->name, username);
     new_user->cht_sd = 0;
     new_user->next_seq_n = 0;
     new_user->next = NULL;
     *chatroom = new_user;
     return new_user;
   }
-  else if(strcmp(username,(*chatroom)->username)==0) return NULL;
+  else if(strcmp(username,(*chatroom)->name)==0) return NULL;
   else return append_user(&(*chatroom)->next, username);
 }
 
@@ -26,12 +25,12 @@ struct user* append_user(struct user** chatroom, char* username){
 // *********************************************
 void remove_user(struct user** chatroom, char* username){
   struct user* user = *chatroom, *prev;
-  if(user != NULL && strcmp(user->username,username)==0) {
+  if(user != NULL && strcmp(user->name,username)==0) {
     *chatroom = user->next;
     free(user);
     return;
   }
-  while(user != NULL && strcmp(user->username,username)!=0) {
+  while(user != NULL && strcmp(user->name,username)!=0) {
     prev = user;
     user = user->next;
   }
@@ -46,7 +45,7 @@ void remove_user(struct user** chatroom, char* username){
 void print_chatroom(struct user* chatroom){
   struct user* user = chatroom;
   while(user!=NULL){
-    printf("-) %s\n", user->username);
+    printf("-) %s\n", user->name);
     user = user->next;
   }
 }
@@ -58,7 +57,7 @@ void print_chatroom(struct user* chatroom){
 int chatting_with(char *user, struct user* chatroom){
   struct user * c_user = chatroom;
   while (c_user!=NULL) {
-    if(strcmp(c_user->username, user)==0) return 1;
+    if(strcmp(c_user->name, user)==0) return 1;
     c_user= c_user->next;
   }
   return 0;
@@ -70,14 +69,12 @@ int chatting_with(char *user, struct user* chatroom){
 // Il mittente è NULL per identificare
 // che è l'utente stesso...
 // *************************************
-struct msg* create_my_msg(char* dest, char* text, int seq_n){
+struct msg* create_my_msg(char* dest, char* my_username, char* text, int seq_n){
   struct msg* msg = (struct msg*)malloc(sizeof(struct msg));
-  msg->sender = NULL;
   msg->ACK = 0;
-  //msg->dest = (char*) malloc((strlen(dest)+1)*sizeof(char));
-  strcpy(msg->dest,dest);
-  //msg->text = (char*) malloc((strlen(text)+1)*sizeof(char));
-  strcpy(msg->text, text);
+  strncpy(msg->dest, dest, S_BUF_LEN);
+  strncpy(msg->sender, my_username, S_BUF_LEN);
+  strncpy(msg->text, text, BUF_LEN);
   msg->seq_n = seq_n;
   return msg;
 }
@@ -91,9 +88,9 @@ void send_chatroom_mp(int p_son_sd, struct user* chatroom){
   uint32_t len;
   struct user* user = chatroom;
   while(user!=NULL){
-    len = strlen(user->username)+1;
+    len = strlen(user->name)+1;
     write(p_son_sd, &len, sizeof(len));
-    write(p_son_sd, user->username, len);
+    write(p_son_sd, user->name, len);
     user=user->next;
   }
   len = 0;
@@ -121,7 +118,7 @@ void display_help_message(){
 struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
   struct chat *c_chat = *l_chat_ref;
   while(c_chat!=NULL){
-    if(strcmp(c_chat->user, username)==0){
+    if(strcmp(c_chat->name, username)==0){
       return c_chat->l_msg;
     }
     c_chat = c_chat->next;
@@ -138,7 +135,8 @@ void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
   struct msg* l_msg = find_msg_list(l_chat_ref, username);
   struct msg* c_msg = l_msg;
   while(c_msg!=NULL){
-    if(c_msg->sender == NULL && c_msg->seq_n == seq_n) c_msg->ACK = 1;
+    //if(c_msg->sender == NULL && c_msg->seq_n == seq_n) c_msg->ACK = 1;
+    if(strcmp(c_msg->dest,username) && c_msg->seq_n == seq_n) c_msg->ACK = 1;
     c_msg = c_msg->next;
   }
 }
@@ -205,7 +203,7 @@ void save_chats(struct chat* l_chats){
   }
   while(c_chat!=NULL){
     len = strlen(c_chat->name)+4;
-    filename = (*char)malloc(len*sizeof(char));
+    filename = (char*)malloc(len*sizeof(char));
     sprintf(filename,"%s.dat",c_chat->name);
     msg_file_p = fopen (filename, "w");
     free(filename);
@@ -236,7 +234,7 @@ void load_chats(struct chat** l_chats_ref){
   int len;
 
   struct chat in_chat;
-  struct char* new_chat;
+  struct chat* new_chat;
   struct msg in_msg;
   struct msg* new_msg;
 
@@ -246,9 +244,9 @@ void load_chats(struct chat** l_chats_ref){
   }
 
   while(fread(&in_chat, sizeof(struct chat), 1, chat_file_p)){
-    len = strlen(in_chat->name)+4;
-    filename = (*char)malloc(len*sizeof(char));
-    sprintf(filename,"%s.dat",in_chat->name);
+    len = strlen(in_chat.name)+4;
+    filename = (char*)malloc(len*sizeof(char));
+    sprintf(filename, "%s.dat", in_chat.name);
     msg_file_p = fopen (filename, "r");
     free(filename);
 

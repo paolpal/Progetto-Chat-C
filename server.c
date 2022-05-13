@@ -29,7 +29,7 @@ int main(int argc, char const *argv[]) {
   char buffer[BUF_LEN];
 
   struct user_data *registro = NULL;
-  struct destinatario* destinatari = NULL;
+  struct chat* destinatari = NULL;
 
   listener = socket(AF_INET, SOCK_STREAM, 0);
   memset(&my_addr, 0, sizeof(my_addr));

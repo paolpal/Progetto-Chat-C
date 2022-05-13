@@ -131,11 +131,11 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   char buffer[BUF_LEN];
 
   sprintf(buffer,"%s", "CHT");
-  printf("<LOG-C> Invio richiesta di CHAT\n");
+  printf("<LOG> Invio richiesta di CHAT\n");
   ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME DESTINATARIO
-  printf("<LOG-C> Invio lo USERNAME destinatario\n");
+  printf("<LOG> Invio lo USERNAME destinatario\n");
   len = strlen(dest_user)+1;
   lmsg = htons(len);
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
@@ -144,7 +144,7 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   ret = send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME MITTENTE
-  printf("<LOG-C> Invio lo USERNAME mittente (IO)\n");
+  printf("<LOG> Invio lo USERNAME mittente (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
@@ -153,7 +153,7 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   ret = send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL MESSAGGIO
-  printf("<LOG-C> Invio il MESSAGGIO\n");
+  printf("<LOG> Invio il MESSAGGIO\n");
   len = strlen(msg)+1;
   lmsg = htons(len);
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
@@ -166,19 +166,19 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   // se il seq_n non è settato, ne aspetto uno dal server
   // che viene assegnato randomicamente
   if(*seq_n==0){
-    printf("<LOG-C> Attendo il nuovo NUMERO SEQUENZIALE \n");
+    printf("<LOG> Attendo il nuovo NUMERO SEQUENZIALE \n");
     recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
     *seq_n = ntohs(lmsg);
   }
 
   //RICEVO LA PORTA DEL CONTATTO
-  printf("<LOG-C> Attendo il FEEDBACK dal SERVER\n");
+  printf("<LOG> Attendo il FEEDBACK dal SERVER\n");
   ret = recv_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   port = ntohs(lmsg);
 
   if(port==0) return 0;
 
-  printf("<LOG-C> Apro una connessione TCP con il CLIENT\n");
+  printf("<LOG> Apro una connessione TCP con il CLIENT\n");
   cht_sd = socket(AF_INET, SOCK_STREAM, 0);
 
   memset(dest_addr, 0, sizeof(*dest_addr));
@@ -190,6 +190,7 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   if(ret<0){
     return 0;
   }
+  printf("<LOG> Connessione aperta\n");
   return cht_sd;
 }
 
@@ -311,18 +312,16 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     send_msg_ack_protocol_client(sd, my_user, sender_user, seq_n);
 
     msg = (struct msg*) malloc(sizeof(struct msg));
-    msg->dest = NULL;
+    strncpy(msg->dest, my_user, S_BUF_LEN);
     len = strlen(sender_user)+1;
-    msg->sender = (char*) malloc(len*sizeof(char));
     strcpy(msg->sender, sender_user);
     len = strlen(msg_text)+1;
-    msg->text = (char*) malloc(len*sizeof(char));
     strcpy(msg->text, msg_text);
     msg->next = NULL;
     msg->seq_n = seq_n;
 
-    add_msg(l_chat, msg);
-    print_msg(msg);
+    add_msg(l_chat, msg, my_user);
+    print_msg(msg, my_user);
   }
   printf("<LOG-M> Fine ricezione\n");
 }
@@ -463,7 +462,6 @@ void add_user_request_protocol_client(int cht_sd, char* username){
 void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, char* c_username){
   int ret, len;
   uint16_t lmsg;
-  uint32_t len32;
   char buffer[BUF_LEN];
   char *username;
 
@@ -482,7 +480,7 @@ void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, 
   if(chatting){
     if(strcmp(c_username, username)!=0){
       printf("<LOG-C> Aggiungo lo username alla CHATROOM\n");
-      append_user(&chatroom, username);
+      append_user(chatroom_ref, username);
     }
   }
   free(username);
@@ -522,7 +520,6 @@ void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
 void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatting){
   int ret, len;
   uint16_t lmsg;
-  uint32_t len32;
   char buffer[BUF_LEN];
   char *username;
 
@@ -544,7 +541,7 @@ void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chat
   // ***************************************
   if(chatting){
     printf("<LOG> Rimuovo lo username dalla CHATROOM\n");
-    remove_user(&chatroom, buffer);
+    remove_user(chatroom_ref, buffer);
   }
   free(username);
 }
@@ -611,6 +608,7 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
   int len;
   char buffer[BUF_LEN];
   char *username;
+  struct user* user;
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Ricevo lo USERNAME\n");
@@ -621,10 +619,10 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
   ret = recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
-  if(chatting && chatting_with(buffer, chatroom)){
+  if(chatting && chatting_with(buffer, *chatroom_ref)){
     user = *chatroom_ref;
     while(user != NULL){
-      len = strlen(user->username)+1;
+      len = strlen(user->name)+1;
       lmsg = htons(len);
       printf("<LOG-M> Invio lo USERNAME\n");
       ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);

@@ -136,8 +136,7 @@ void update_register(struct user_data** head_ref, char *username, short port, in
 void push_registro(struct user_data** head_ref, char *username, short port, int sd){
   if(!present(head_ref, username)){
     struct user_data* new_node = (struct user_data*) malloc(sizeof(struct user_data));
-    new_node->user_dest = (char*) malloc(sizeof(char)*(strlen(username)+1));
-    strcpy(new_node->user_dest,username);
+    strncpy(new_node->user_dest,username, S_BUF_LEN);
     new_node->port = port;
     new_node->sd = sd;
     new_node->next = (*head_ref);
@@ -255,11 +254,11 @@ int logout(struct user_data** head_ref, char *user){
 // ritornaa il riferimento alla lista dei
 // messaggi pendenti dell'utente specificato
 // ****************************************
-struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* username){
-  struct destinatario* current = *head_ref;
-  while(current != NULL){
-    if(strcmp(current->destinatario, username)==0) return &(current->messaggi);
-    current = current->next;
+struct hanging_msg** find_pending_msg(struct chat** head_ref, char* username){
+  struct chat* c_chat = *head_ref;
+  while(c_chat != NULL){
+    if(strcmp(c_chat->name, username)==0) return &(c_chat->l_msg);
+    c_chat = c_chat->next;
   }
   return append_dest(head_ref, username);
 }
@@ -269,15 +268,13 @@ struct hanging_msg** find_pending_msg(struct destinatario** head_ref, char* user
 // un nuovo destinatario, in testa
 // e ritorna il riferimento alla lista dei messaggi
 // ****************************************
-struct hanging_msg** append_dest(struct destinatario** head_ref, char* username){
-  struct destinatario* new_node = (struct destinatario*) malloc(sizeof(struct destinatario));
-  new_node->destinatario = (char*) malloc(sizeof(char)*(strlen(username)+1));
-  strcpy(new_node->destinatario, username);
-  //new_node->timestamp = NULL;
-  new_node->messaggi = NULL;
+struct hanging_msg** append_dest(struct chat** head_ref, char* username){
+  struct chat* new_node = (struct chat*) malloc(sizeof(struct chat));
+  strncpy(new_node->name, username, S_BUF_LEN);
+  new_node->l_msg = NULL;
   new_node->next = (*head_ref);
   (*head_ref) = new_node;
-  return &(new_node->messaggi);
+  return &(new_node->l_msg);
 }
 
 // ****************************************
@@ -288,9 +285,9 @@ struct hanging_msg** append_dest(struct destinatario** head_ref, char* username)
 void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user, char* msg, int seq_n){
   if(*head_ref==NULL){
     struct hanging_msg* new_msg = (struct hanging_msg*) malloc(sizeof(struct hanging_msg));
-    new_msg->msg = msg;
-    new_msg->send = send_user;
-    new_msg->dest = dest_user;
+    strncpy(new_msg->text, msg, BUF_LEN);
+    strncpy(new_msg->send, send_user, S_BUF_LEN);
+    strncpy(new_msg->dest, dest_user, S_BUF_LEN);
     new_msg->seq_n = seq_n;
     new_msg->timestamp = (time_t*)malloc(sizeof(time_t));
     time(new_msg->timestamp);
@@ -304,17 +301,17 @@ void append_msg(struct hanging_msg** head_ref, char* dest_user, char* send_user,
 // funzione di debug: per stampare i messaggi pendenti
 // e controllare lo stato del server
 // ****************************************
-void prind_all_hanging_msg(struct destinatario* head){
-  struct destinatario* current_dest = head;
-  struct hanging_msg* current_msg = NULL;
-  while (current_dest!=NULL) {
-    current_msg = current_dest->messaggi;
-    printf("MESSAGGI PER %s\n", current_dest->destinatario);
-    while (current_msg!=NULL) {
-      printf("%s : %s", current_msg->send, current_msg->msg);
-      current_msg = current_msg->next;
+void prind_all_hanging_msg(struct chat* head){
+  struct chat* c_dest = head;
+  struct hanging_msg* c_msg = NULL;
+  while (c_dest!=NULL) {
+    c_msg = c_dest->l_msg;
+    printf("MESSAGGI PER %s\n", c_dest->name);
+    while (c_msg!=NULL) {
+      printf("%s : %s", c_msg->send, c_msg->text);
+      c_msg = c_msg->next;
     }
-    current_dest = current_dest->next;
+    c_dest = c_dest->next;
   }
 }
 
@@ -324,7 +321,7 @@ void prind_all_hanging_msg(struct destinatario* head){
 // ****************************************
 void append_sender(struct sender** sender_head_ref, char* username){
   struct sender* new_sender = (struct sender*)malloc(sizeof(struct sender));
-  new_sender->username = username;
+  strncpy(new_sender->username, username, S_BUF_LEN);
   new_sender->n_msg = 1;
   new_sender->next = *sender_head_ref;
   *sender_head_ref = new_sender;

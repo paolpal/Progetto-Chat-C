@@ -16,13 +16,15 @@
 #include "protocols.h"
 #include "utility.h"
 
-void add_msg(struct chat **ricevuti, struct msg *messaggio);
-void push_msg(struct msg **messaggi, struct msg *messaggio);
 void send_msg(int cht_sd, char* my_user, char* msg, int seq_n);
-void recv_msg(int srv_sd, int cht_sd, int p_father_sd, int p_son_sd, int chatting, char* my_user, struct chat** ricevuti, char* buffer);
-void chat(int sd, int p_son_sd, int p_father_sd,char* my_user, char* dest_user);
-void print_msg(struct msg *messaggio);
-void print_chat(struct chat *l_chat, char* user);
-void add_chat(struct chat **l_chat, char* user);
+void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat** ricevuti, struct user** chatroom_ref);
+void add_msg(struct chat **l_chat_r, struct msg *msg, char* my_user);
+void add_chat(struct chat **l_chat_r, char* user);
+void push_msg(struct msg **l_msg_r, struct msg *msg);
+void push_chat(struct chat **l_chat, struct chat *chat);
+void print_msg(struct msg *msg, char* my_user);
+void print_chat(struct chat *l_chat, char* user, char* my_user);
+void copy_msg(struct msg *dest_msg_r, struct msg* source_msg_r);
+void copy_chat(struct chat *dest_chat_r, struct chat* source_chat_r);
 
 #endif
