@@ -179,13 +179,6 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   seq_n = ntohs(lmsg);
 
-  // numero di sequenza non fissato, ne genero uno e lo invio al client
-  if(seq_n==0){
-    seq_n = rand();
-    lmsg = htons(seq_n);
-    send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
-  }
-
   printf("<LOG> Cerco il destinatario\n");
 
   // ricerco il destinatario tra gli utenti online

@@ -10,7 +10,7 @@
 int signup_protocol_client(int sd, char* user, char* pw);
 int login_protocol_client(int sd, char* user, char* pw, short port);
 int logout_protocol_client(int sd, char* user);
-int new_chat_protocol_client(int sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int* seq_n);
+int new_chat_protocol_client(int sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int seq_n);
 void hanging_protocol_client(int sd, char* user);
 void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat);
 void receive_file_protocol_client(int sd);

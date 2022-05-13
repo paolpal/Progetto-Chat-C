@@ -46,14 +46,14 @@ void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
 // messaggio, e in ogni caso lo inserisce nella chat
 // E' invocata dal MAIN PROCESS
 // *********************************************
-void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat** ricevuti, struct user** chatroom_ref){
+void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat** l_chat_ref, struct user** chatroom_ref){
   uint16_t lmsg;
   int len;
   char buffer[BUF_LEN];
 
+  struct chat* chat_p;
   struct msg* msg = (struct msg*) malloc(sizeof(struct msg));
 
-  //msg->dest = NULL;
   strncpy(msg->dest, my_user, S_BUF_LEN);
 
   //RICEVO LA LUNGHEZZA DEL MITTENTE
@@ -81,22 +81,21 @@ void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat**
   // INVIO L'ACK DI RICEZIONE
   send_msg_ack_protocol_client(srv_sd, my_user, msg->sender, msg->seq_n);
 
-  //COMUNICO CON IL CHATTING PROCESS SE ATTIVO
   if(chatting){
     if(chatting_with(msg->sender, *chatroom_ref))
       print_msg(msg, my_user);
   }
   // Inserisco il messaggio nella chat associata
-  add_msg(ricevuti, msg, my_user);
+  //add_msg(l_chat_ref, msg, my_user);
+  chat_p = find_chat(l_chat_ref, msg->sender);
+  push_msg(&(chat_p->l_msg), msg);
 }
 
 void add_msg(struct chat **l_chat, struct msg *msg, char* my_user){
-  //char* find = (msg->sender==NULL)? msg->dest:msg->sender;
-  char* find = (strncmp(msg->sender, my_user, S_BUF_LEN))? msg->dest:msg->sender;
+  char* find = (strncmp(msg->sender, my_user, S_BUF_LEN)==0)? msg->dest:msg->sender;
   struct chat *c_chat = *l_chat;
   while(c_chat!=NULL){
     // cerco la chat associata all'utente specificato
-    // se il messaggio lo ho scritto io msg->sender sarà NULL
     if(strncmp(c_chat->name, find, S_BUF_LEN)==0){
       push_msg(&c_chat->l_msg, msg);
       return;
@@ -112,14 +111,32 @@ void add_msg(struct chat **l_chat, struct msg *msg, char* my_user){
 // ******************************************
 // Aggiungo una chat in testa alla lista
 // ******************************************
-void add_chat(struct chat **l_chat, char* user){
+struct chat* add_chat(struct chat **l_chat, char* user){
   int len;
   struct chat *new_chat  = (struct chat*) malloc(sizeof(struct chat));
   len = strlen(user)+1;
   strncpy(new_chat->name, user, S_BUF_LEN);
   new_chat->l_msg=NULL;
+  new_chat->next_seq_n = 0;
   new_chat->next = (*l_chat);
   (*l_chat) = new_chat;
+  return new_chat;
+}
+
+// *************************************
+// data la lista di tutte le chat
+// la funzione ritorna la chat
+// corrispondente all'utente cercato
+// *************************************
+struct chat* find_chat(struct chat **l_chat_ref, char *username){
+  struct chat *c_chat = *l_chat_ref;
+  while(c_chat!=NULL){
+    if(strcmp(c_chat->name, username)==0){
+      return c_chat;
+    }
+    c_chat = c_chat->next;
+  }
+  return add_chat(l_chat_ref, username);
 }
 
 // ******************************************

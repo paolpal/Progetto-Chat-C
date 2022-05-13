@@ -138,13 +138,19 @@ int main(int argc, char const *argv[]) {
                   perror("Bind non riuscita: ");
                   exit(0);
                 }
+                FD_SET(listener, &master);
+                if(listener > fdmax){
+                  fdmax = listener;
+                }
               }
             }
             else if(logged && strcmp(command,"out")==0 && (nump == 0)){
               printf("RICHIESTA DI LOGOUT\n");
-              if(logout_protocol_client(srv_sd, username)){
+              if(logout_protocol_client(srv_sd, logged_username)){
                 printf("Logout avvenuto con successo!\n");
+                FD_CLR(listener, &master);
                 close(listener);
+                listener = 0;
                 logged = 0;
               }
             }
@@ -159,14 +165,15 @@ int main(int argc, char const *argv[]) {
               else printf("Utente non in RUBRICA\n");
             }
             else if(logged && strcmp(command,"hanging")==0 && (nump == 0)){
-              hanging_protocol_client(srv_sd, username);
+              hanging_protocol_client(srv_sd, logged_username);
             }
             else if(logged && strcmp(command,"show")==0 && (nump == 1)){
               sender = strtok(NULL, " ");
-              show_protocol_client(srv_sd, username, sender, &l_chat);
+              show_protocol_client(srv_sd, logged_username, sender, &l_chat);
             }
             else if(strcmp(command,"esc")==0){
               printf("Arrivederci\n");
+              save_chats(l_chat);
               close(srv_sd);
               exit(0);
             }
@@ -183,6 +190,7 @@ int main(int argc, char const *argv[]) {
                 if(user->cht_sd != 0){
                   leave_chatroom_request_protocol_client(user->cht_sd, logged_username);
                   close(user->cht_sd);
+                  user->cht_sd = 0;
                 }
                 user = user->next;
               }
@@ -237,19 +245,24 @@ int main(int argc, char const *argv[]) {
               user = chatroom;
               strcpy(msg_b, buffer);
               while(user!=NULL){
+                if(user->chat == NULL){
+                  user->chat = find_chat(&l_chat, user->name);
+                }
                 // Se ho aperto una socket con l'utente destinatario, mando il messaggio
                 // altrimenti contact il server per aprire una nuova comunicazione
                 if(user->cht_sd != 0){
-                  send_msg(user->cht_sd, logged_username, msg_b, user->next_seq_n);
+                  send_msg(user->cht_sd, logged_username, msg_b, user->chat->next_seq_n);
                 }
                 else {
-                  user->cht_sd = new_chat_protocol_client(srv_sd, logged_username, user->name, &user->addr, msg_b, &user->next_seq_n);
+                  user->cht_sd = new_chat_protocol_client(srv_sd, logged_username, user->name, &user->addr, msg_b, user->chat->next_seq_n);
                 }
 
-                msg = create_my_msg(user->name, logged_username, msg_b, user->next_seq_n);
-                add_msg(&l_chat, msg, logged_username);
+                msg = create_my_msg(user->name, logged_username, msg_b, user->chat->next_seq_n);
+
+                //add_msg(&l_chat, msg, logged_username);
+                push_msg(&(user->chat->l_msg), msg);
                 //incremento il numero sequenziale del messaggio
-                user->next_seq_n++;
+                user->chat->next_seq_n++;
                 user = user->next;
               }
             }
@@ -275,7 +288,7 @@ int main(int argc, char const *argv[]) {
           // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           if(strcmp(buffer, "MSG")==0){
             printf("<LOG> Ricevo richiesta di MESSAGE\n");
-            recv_msg(srv_sd, i, chatting, username, &l_chat, &chatroom);
+            recv_msg(srv_sd, i, chatting, logged_username, &l_chat, &chatroom);
           }
           else if(strcmp(buffer, "MAK")==0){
             printf("<LOG> Ricevo richiesta di MESSAGE ACK\n");

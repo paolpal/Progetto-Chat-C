@@ -19,7 +19,8 @@
 void send_msg(int cht_sd, char* my_user, char* msg, int seq_n);
 void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat** ricevuti, struct user** chatroom_ref);
 void add_msg(struct chat **l_chat_r, struct msg *msg, char* my_user);
-void add_chat(struct chat **l_chat_r, char* user);
+struct chat* find_chat(struct chat **l_chat_ref, char *username);
+struct chat* add_chat(struct chat **l_chat_r, char* user);
 void push_msg(struct msg **l_msg_r, struct msg *msg);
 void push_chat(struct chat **l_chat, struct chat *chat);
 void print_msg(struct msg *msg, char* my_user);

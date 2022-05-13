@@ -11,7 +11,6 @@ struct user* append_user(struct user** chatroom, char* username){
     len = strlen(username)+1;
     strcpy(new_user->name, username);
     new_user->cht_sd = 0;
-    new_user->next_seq_n = 0;
     new_user->next = NULL;
     *chatroom = new_user;
     return new_user;
@@ -107,16 +106,16 @@ void display_help_message(){
   printf("6) share filename --> invio il file agli utenti con cui sto chattando\n");
   printf("7) out --> eseguo una disconnessione dal server\n");
   printf("8) esc --> termino l'applicazione\n");
-  printf("8) help --> mostro il messaggio di aiuto\n");
+  printf("9) help --> mostro il messaggio di aiuto\n");
 }
 
 // *************************************
 // data la lista di tutte le chat
-// la funzione ritorna la chat
+// la funzione ritorna la lista dei messaggi
 // corrispondente all'utente cercato
 // *************************************
-struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
-  struct chat *c_chat = *l_chat_ref;
+struct msg* find_msg_list(struct chat *l_chat, char *username){
+  struct chat *c_chat = l_chat;
   while(c_chat!=NULL){
     if(strcmp(c_chat->name, username)==0){
       return c_chat->l_msg;
@@ -132,11 +131,11 @@ struct msg* find_msg_list(struct chat **l_chat_ref, char *username){
 // consegna al messaggio corretto
 // *************************************
 void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
-  struct msg* l_msg = find_msg_list(l_chat_ref, username);
+  struct msg* l_msg = find_msg_list(*l_chat_ref, username);
   struct msg* c_msg = l_msg;
   while(c_msg!=NULL){
     //if(c_msg->sender == NULL && c_msg->seq_n == seq_n) c_msg->ACK = 1;
-    if(strcmp(c_msg->dest,username) && c_msg->seq_n == seq_n) c_msg->ACK = 1;
+    if(strcmp(c_msg->dest,username)==0 && c_msg->seq_n == seq_n) c_msg->ACK = 1;
     c_msg = c_msg->next;
   }
 }
@@ -201,6 +200,7 @@ void save_chats(struct chat* l_chats){
   if(chat_file_p == NULL){
     return;
   }
+  printf("<LOG> Aperto il file CHATS.DAT.\n");
   while(c_chat!=NULL){
     len = strlen(c_chat->name)+4;
     filename = (char*)malloc(len*sizeof(char));
@@ -216,6 +216,7 @@ void save_chats(struct chat* l_chats){
         c_msg = next_msg;
       }
       fclose(msg_file_p);
+      printf("<LOG> Salvata la chat con: %s.\n",c_chat->name);
     }
     next_chat = c_chat->next;
     c_chat->next = NULL;

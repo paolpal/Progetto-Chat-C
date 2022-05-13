@@ -13,12 +13,6 @@
 
 #include "constants.h"
 
-struct contact{
-  char user[S_BUF_LEN];
-  short port;
-  struct sockaddr_in addr;
-};
-
 struct msg{
   char text[BUF_LEN];
   char sender[S_BUF_LEN];
@@ -31,13 +25,15 @@ struct msg{
 struct chat{ // chat - mittente
   char name[S_BUF_LEN]; // user - mittente
   struct msg *l_msg;
+  int next_seq_n;
   struct chat *next;
 };
 
 struct user{
   char name[S_BUF_LEN];
   int cht_sd;
-  int next_seq_n;
+  //int next_seq_n;
+  struct chat* chat;
   struct sockaddr_in addr;
   struct user* next;
 };

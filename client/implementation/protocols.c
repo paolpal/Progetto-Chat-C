@@ -124,7 +124,7 @@ int logout_protocol_client(int sd, char* user){
 // destinatario, o 0 se l'invio è fallito.
 // [Il messaggio resta pendente sul server.]
 // ************************************
-int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int* seq_n){
+int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int seq_n){
   int ret, len, cht_sd;
   uint16_t lmsg;
   short port;
@@ -161,15 +161,8 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
   ret = send_all(srv_sd, (void*) msg, len, 0);
 
   //INVIO IL NUMERO DI SEQUENZA
-  lmsg = htons(*seq_n);
+  lmsg = htons(seq_n);
   ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
-  // se il seq_n non è settato, ne aspetto uno dal server
-  // che viene assegnato randomicamente
-  if(*seq_n==0){
-    printf("<LOG> Attendo il nuovo NUMERO SEQUENZIALE \n");
-    recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
-    *seq_n = ntohs(lmsg);
-  }
 
   //RICEVO LA PORTA DEL CONTATTO
   printf("<LOG> Attendo il FEEDBACK dal SERVER\n");
@@ -683,13 +676,13 @@ void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
   int ret, seq_n, len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
-  char* username;
+  char username[S_BUF_LEN];
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
   printf("<LOG-M> Ricevo lo USERNAME\n");
   ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
-  username = (char*) malloc(len*sizeof(char));
+  //username = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME DESTINATARIO
   ret = recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
