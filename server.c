@@ -55,7 +55,8 @@ int main(int argc, char const *argv[]) {
 
   fdmax = listener;
 
-  srand(time(NULL));
+  load_register(&registro);
+  load_l_chat(&destinatari);
   printf("********************** SERVER AVVIATO **********************\n");
   display_help_message();
   while(status == ON){
@@ -77,6 +78,8 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(destinatari);
           else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
+            save_l_chat(destinatari);
+            save_register(registro);
             status = OFF;
           } // procedura di shutdown: chiudi socket e tutto
         }
@@ -96,7 +99,7 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer,"LIN")==0){
             printf("RICHIESTA DI LOGIN\n");
-            login_protocol(i, &registro, buffer);
+            login_protocol(i, &registro, &destinatari, buffer);
           }
           else if(strcmp(buffer,"HNG")==0){
             printf("RICHIESTA DI HANGING\n");
@@ -120,7 +123,7 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer,"MAK")==0){
             printf("RICHIESTA DI MESSAGE ACK\n");
-            forw_msg_ack_protocol(i, &registro, buffer);
+            forw_msg_ack_protocol(i, &registro, &destinatari, buffer);
           }
           else if(strcmp(buffer,"ONL")==0){
             printf("RICHIESTA DI ONLINE CHECK\n");

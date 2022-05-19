@@ -75,7 +75,6 @@ int main(int argc, char const *argv[]) {
 
   fdmax = fileno(stdin);
 
-  load_chats(&l_chat);
   display_help_message();
 
   while(1){
@@ -142,6 +141,7 @@ int main(int argc, char const *argv[]) {
                 if(listener > fdmax){
                   fdmax = listener;
                 }
+                load_chats(&l_chat,logged_username);
               }
             }
             else if(logged && strcmp(command,"out")==0 && (nump == 0)){
@@ -152,6 +152,8 @@ int main(int argc, char const *argv[]) {
                 close(listener);
                 listener = 0;
                 logged = 0;
+                save_chats(l_chat, logged_username);
+                delete_l_chat(&l_chat);
               }
             }
             else if(strcmp(command,"help")==0) display_help_message();
@@ -164,16 +166,16 @@ int main(int argc, char const *argv[]) {
               }
               else printf("Utente non in RUBRICA\n");
             }
-            else if(logged && strcmp(command,"hanging")==0 && (nump == 0)){
+            else if(logged && strcmp(command, "hanging")==0 && (nump == 0)){
               hanging_protocol_client(srv_sd, logged_username);
             }
-            else if(logged && strcmp(command,"show")==0 && (nump == 1)){
+            else if(logged && strcmp(command, "show")==0 && (nump == 1)){
               sender = strtok(NULL, " ");
               show_protocol_client(srv_sd, logged_username, sender, &l_chat);
             }
-            else if(strcmp(command,"esc")==0){
+            else if(strcmp(command, "esc")==0){
               printf("Arrivederci\n");
-              save_chats(l_chat);
+              if(logged) save_chats(l_chat, logged_username);
               close(srv_sd);
               exit(0);
             }
@@ -227,7 +229,7 @@ int main(int argc, char const *argv[]) {
               }
               else printf("Utente non ONLINE\n");
             }
-            else if(strcmp(cmd,"share")==0){
+            else if(strcmp(cmd, "share")==0){
               strtok(buffer, " ");
               filename = strtok(NULL, " ");
               // Invio separatamente, ad ogni utente il file
@@ -315,7 +317,7 @@ int main(int argc, char const *argv[]) {
     }
   }
 
-  save_chats(l_chat);
-  close(srv_sd);
+  //save_chats(l_chat, logged_username);
+  //close(srv_sd);
   return 0;
 }

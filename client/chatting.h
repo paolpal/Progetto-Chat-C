@@ -27,5 +27,7 @@ void print_msg(struct msg *msg, char* my_user);
 void print_chat(struct chat *l_chat, char* user, char* my_user);
 void copy_msg(struct msg *dest_msg_r, struct msg* source_msg_r);
 void copy_chat(struct chat *dest_chat_r, struct chat* source_chat_r);
+void delete_l_chat(struct chat **l_chat_r);
+void delete_l_msg(struct msg **l_msg_r);
 
 #endif

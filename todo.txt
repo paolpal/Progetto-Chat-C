@@ -2,6 +2,8 @@ TODO
 
 DONE
 
+- Appena ti colleghi ricevi gli ACK pendenti (DA FARE)
+
 - gestione delle DISCONNESSIONI INASPETTATE (FATTO)
   risulti online ma non lo sei più
 

@@ -143,20 +143,20 @@ struct chat* find_chat(struct chat **l_chat_ref, char *username){
 // Inserisco un messaggio in fondo alla lista
 // per facilitare la stampa
 // ******************************************
-void push_msg(struct msg **l_msg, struct msg *msg){
-  if(*l_msg==NULL){
-    msg->next = (*l_msg);
-    (*l_msg) = msg;
+void push_msg(struct msg **l_msg_r, struct msg *msg){
+  if(*l_msg_r==NULL){
+    msg->next = NULL;
+    (*l_msg_r) = msg;
   }
-  else push_msg(&(*l_msg)->next, msg);
+  else push_msg(&(*l_msg_r)->next, msg);
 }
 
-void push_chat(struct chat **l_chat, struct chat *chat){
-  if(*l_chat==NULL){
-    chat->next = (*l_chat);
-    (*l_chat) = chat;
+void push_chat(struct chat **l_chat_r, struct chat *chat){
+  if(*l_chat_r==NULL){
+    chat->next = NULL;
+    (*l_chat_r) = chat;
   }
-  else push_chat(&(*l_chat)->next, chat);
+  else push_chat(&(*l_chat_r)->next, chat);
 }
 
 // ******************************************
@@ -203,4 +203,37 @@ void copy_msg(struct msg *dest_msg_r, struct msg* source_msg_r){
 
 void copy_chat(struct chat *dest_chat_r, struct chat* source_chat_r){
   strncpy(dest_chat_r->name, source_chat_r->name, S_BUF_LEN);
+}
+
+// *************************************
+// Elimino la lista delle chat
+// *************************************
+void delete_l_chat(struct chat **l_chat_r){
+  struct chat* c_chat = *l_chat_r;
+  struct chat* next;
+
+  while(c_chat!=NULL){
+    next = c_chat->next;
+    delete_l_msg(&(c_chat->l_msg));
+    free(c_chat);
+    c_chat = next;
+  }
+
+  *l_chat_r = NULL;
+}
+
+// *************************************
+// Elimino la lista dei messaggi
+// *************************************
+void delete_l_msg(struct msg **l_msg_r){
+  struct msg* c_msg = *l_msg_r;
+  struct msg* next;
+
+  while(c_msg!=NULL){
+    next = c_msg->next;
+    free(c_msg);
+    c_msg = next;
+  }
+
+  *l_msg_r = NULL;
 }

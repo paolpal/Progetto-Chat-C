@@ -22,8 +22,8 @@ struct msg{
   struct msg *next;
 };
 
-struct chat{ // chat - mittente
-  char name[S_BUF_LEN]; // user - mittente
+struct chat{
+  char name[S_BUF_LEN];
   struct msg *l_msg;
   int next_seq_n;
   struct chat *next;
@@ -32,7 +32,6 @@ struct chat{ // chat - mittente
 struct user{
   char name[S_BUF_LEN];
   int cht_sd;
-  //int next_seq_n;
   struct chat* chat;
   struct sockaddr_in addr;
   struct user* next;
