@@ -11,31 +11,28 @@
 #ifndef _CLIENT_STRUCT_H_
 #define _CLIENT_STRUCT_H_
 
-struct contatto{
-  char *user;
-  short port;
-  struct sockaddr_in addr;
-};
+#include "constants.h"
 
 struct msg{
-  char *text;
-  char *sender;
+  char text[BUF_LEN];
+  char sender[S_BUF_LEN];
+  char dest[S_BUF_LEN];
   int ACK;
   int seq_n;
-  char *dest;
   struct msg *next;
 };
 
-struct chat{ // chat - mittente
-  char *user; // user - mittente
+struct chat{
+  char name[S_BUF_LEN];
   struct msg *l_msg;
+  int next_seq_n;
   struct chat *next;
 };
 
 struct user{
-  char* username;
+  char name[S_BUF_LEN];
   int cht_sd;
-  int next_seq_n;
+  struct chat* chat; //riferimento alla lista, per praticità
   struct sockaddr_in addr;
   struct user* next;
 };

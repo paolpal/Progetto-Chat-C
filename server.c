@@ -28,8 +28,8 @@ int main(int argc, char const *argv[]) {
   struct sockaddr_in my_addr, cl_addr;
   char buffer[BUF_LEN];
 
-  struct user_data *registro = NULL;
-  struct destinatario* destinatari = NULL;
+  struct user_data *u_register = NULL;
+  struct chat* l_chat = NULL;
 
   listener = socket(AF_INET, SOCK_STREAM, 0);
   memset(&my_addr, 0, sizeof(my_addr));
@@ -55,7 +55,8 @@ int main(int argc, char const *argv[]) {
 
   fdmax = listener;
 
-  srand(time(NULL));
+  load_register(&u_register);
+  load_l_chat(&l_chat);
   printf("********************** SERVER AVVIATO **********************\n");
   display_help_message();
   while(status == ON){
@@ -73,11 +74,21 @@ int main(int argc, char const *argv[]) {
         }
         else if(i == fileno(stdin)){
           scanf("%s", buffer);
-          if(strcmp(buffer,"list")==0) display_list(registro);
-          else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(destinatari);
+          if(strcmp(buffer,"list")==0) display_list(u_register);
+          else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(l_chat);
           else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
+            printf("Inizio la procedura di CHIUSURA...\n");
+            printf("Chiudo tutte le socket...\n");
+            close_all_connections(u_register);
+            printf("Salvo i messaggi pendenti...\n");
+            save_l_chat(l_chat);
+            printf("Salvo il registro degli utenti...\n");
+            save_register(u_register);
+            printf("Imposto lo STATO OFF...\n");
             status = OFF;
+            close(listener);
+            exit(0);
           } // procedura di shutdown: chiudi socket e tutto
         }
         else{
@@ -85,7 +96,7 @@ int main(int argc, char const *argv[]) {
           if(ret==0){
             printf("Client Disconnesso\n");
             fflush(stdout);
-            logout(&registro, find_user_by_socket(&registro,i));
+            logout(&u_register, find_user_by_socket(&u_register,i));
             close(i);
             FD_CLR(i, &master);
             break;
@@ -96,35 +107,36 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer,"LIN")==0){
             printf("RICHIESTA DI LOGIN\n");
-            login_protocol(i, &registro, buffer);
+            login_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"HNG")==0){
             printf("RICHIESTA DI HANGING\n");
-            hanging_protocol(i, &destinatari, buffer);
+            hanging_protocol(i, &l_chat, buffer);
           }
           else if(strcmp(buffer,"SHW")==0){
             printf("RICHIESTA DI SHOW\n");
-            show_protocol(i, &destinatari, buffer);
+            show_protocol(i, &l_chat, buffer);
           }
           else if(strcmp(buffer,"CHT")==0){
             printf("RICHIESTA DI CHAT\n");
-            new_chat_protocol(i, &registro, &destinatari, buffer);
+            new_chat_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"OUT")==0){
             printf("RICHIESTA DI LOGOUT\n");
-            logout_protocol(i, &registro, buffer);
+            logout_protocol(i, &u_register, buffer);
+            close(i);
           }
           else if(strcmp(buffer,"GRP")==0){
             printf("RICHIESTA DI GROUP\n");
-            group_protocol(i, &registro, buffer);
+            group_protocol(i, &u_register, buffer);
           }
           else if(strcmp(buffer,"MAK")==0){
             printf("RICHIESTA DI MESSAGE ACK\n");
-            forw_msg_ack_protocol(i, &registro, buffer);
+            forw_msg_ack_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"ONL")==0){
             printf("RICHIESTA DI ONLINE CHECK\n");
-            online_check_protocol(i, &registro, buffer);
+            online_check_protocol(i, &u_register, buffer);
           }
         }
       }
