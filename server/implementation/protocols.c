@@ -421,11 +421,11 @@ void online_check_protocol(int i, struct user_data** utenti, char* buffer){
   char *user;
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
-  ret = recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   user = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME
-  ret = recv_all(i, (void*)buffer, len, 0);
+  recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", user);
 
   //VALUTO SE L'UTENTE E' ONLINE
@@ -433,5 +433,5 @@ void online_check_protocol(int i, struct user_data** utenti, char* buffer){
   else ret = 0;
   lmsg = htons(ret);
   //INVIO LA VALUTAZIONE
-  ret = send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(i, (void*) &lmsg, sizeof(uint16_t), 0);
 }

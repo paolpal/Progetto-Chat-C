@@ -48,32 +48,33 @@ int main(int argc, char const *argv[]) {
   int logged = 0;
 
   if(argc<2){
-    printf("Per avviare l'applicazione specifica la porta del server.\nUtilizzo: ./dev <port>\n");
+    printf("Per avviare l'applicazione specifica la porta di ascolto.\nUtilizzo: ./dev <port>\n");
     return 0;
   }
 
-  srv_port = atoi(argv[1]);
+  lst_port = atoi(argv[1]);
 
-  memset(&srv_addr, 0, sizeof(srv_addr));
-  srv_addr.sin_family = AF_INET;
-  srv_addr.sin_port = htons(srv_port);
-  inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
+  listener = socket(AF_INET, SOCK_STREAM, 0);
+  memset(&my_addr, 0, sizeof(my_addr));
+  my_addr.sin_family = AF_INET;
+  my_addr.sin_port = htons(lst_port);
+  my_addr.sin_addr.s_addr = INADDR_ANY;
 
-  srv_sd = socket(AF_INET, SOCK_STREAM, 0);
-
-  ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
-  printf("<LOG> Apro una connessione TCP con il SERVER\n");
+  ret = bind(listener, (struct sockaddr*)&my_addr, sizeof(my_addr));
   if(ret<0){
-    perror("Connessione non riuscita");
+    perror("Bind non riuscita");
     exit(0);
   }
+
+  listen(listener, 10);
 
   FD_ZERO(&master);
   FD_ZERO(&read_fds);
 
   FD_SET(fileno(stdin), &master);
+  FD_SET(listener, &master);
 
-  fdmax = fileno(stdin);
+  fdmax = listener;
 
   display_help_message();
 
@@ -110,39 +111,30 @@ int main(int argc, char const *argv[]) {
             }
             else if(!logged && strcmp(command,"in")==0 && (nump == 3)){
               number = strtok(NULL, " ");
-              lst_port = atoi(number);
+              srv_port = atoi(number);
               username = strtok(NULL, " ");
               password = strtok(NULL, " ");
-              // username contiene il nome utente dell'utente loggato
-              // deve essere permanente durante la sessione
-              // quindi gli alloco memoria
-              // strtok assegna solo l'indirizzo che punta alla parte del buffer
-              sprintf(logged_username, "%s", username);
+
+              memset(&srv_addr, 0, sizeof(srv_addr));
+              srv_addr.sin_family = AF_INET;
+              srv_addr.sin_port = htons(srv_port);
+              inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
+
+              srv_sd = socket(AF_INET, SOCK_STREAM, 0);
+
+              ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
               printf("<LOG> Apro una connessione TCP con il SERVER\n");
-              if(login_protocol_client(srv_sd, username, password, lst_port)){
+              if(ret<0){
+                perror("Connessione non riuscita");
+                //exit(0);
+              }
+              else if(login_protocol_client(srv_sd, username, password, lst_port)){
                 printf("Login avvenuto con successo!\n");
+                sprintf(logged_username, "%s", username);
                 logged = 1;
-                listener = socket(AF_INET, SOCK_STREAM, 0);
-                memset(&my_addr, 0, sizeof(my_addr));
-                my_addr.sin_family = AF_INET;
-                my_addr.sin_addr.s_addr = INADDR_ANY;
-                my_addr.sin_port = htons(lst_port);
-                ret = bind(listener, (struct sockaddr*)&my_addr, sizeof(my_addr));
-                if(ret < 0){
-                  perror("Bind non riuscita: ");
-                  exit(0);
-                }
-                ret = listen(listener, 10);
-                if(ret < 0){
-                  perror("Bind non riuscita: ");
-                  exit(0);
-                }
-                FD_SET(listener, &master);
-                if(listener > fdmax){
-                  fdmax = listener;
-                }
                 load_chats(&l_chat,logged_username);
               }
+              else printf("Username o password errati...\n");
             }
             else if(logged && strcmp(command,"out")==0 && (nump == 0)){
               printf("RICHIESTA DI LOGOUT\n");
