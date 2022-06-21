@@ -359,6 +359,14 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
+  strtok(filename, "\n");
+  
+  printf("<LOG> Controllo il file per il trasferimento...\n");
+  if(access(filename, F_OK) != 0){
+    printf("<LOG> File non accessibile...\n");
+    return;
+  }
+
   //APRO LA SOCKET DI INVIO
   printf("<LOG> Apro una connessione TCP con il CLIENT per il TRASFERIMENTO\n");
   sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -515,6 +523,7 @@ void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chat
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *username;
+  struct user* l_user;
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Ricevo lo USERNAME\n");
@@ -528,13 +537,11 @@ void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chat
   //RIMUOVO L'UTENTE DALLA CHATTING ROOM
   printf("<LOG> Rimuovo lo USERNAME dalla CHATROOM\n");
 
-  // ***************************************
-  // comunico con il CHATTING process
-  // tramite le pipe
-  // ***************************************
-  if(chatting){
+  if(chatting && lenght(*chatroom_ref)>1){
     printf("<LOG> Rimuovo lo username dalla CHATROOM\n");
-    remove_user(chatroom_ref, buffer);
+    l_user = remove_user(chatroom_ref, username);
+    close(l_user->cht_sd);
+    free(l_user);
   }
   free(username);
 }
@@ -553,7 +560,7 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
   int len, ret;
   uint16_t lmsg;
   char buffer[BUF_LEN];
-  char* username;
+  char username[S_BUF_LEN];
 
   //INVIO LA RICHIESTA DI UNIONE
   printf("<LOG-C> Invio richiesta di JOIN (SINCRONIZZAZIONE)\n");
@@ -577,10 +584,12 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
     recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
     len = ntohs(lmsg);
     if(len == 0) break;
-    username = (char*) malloc(len*sizeof(char));
+    //username = (char*) malloc(len*sizeof(char));
     //RICEVO LO USERNAME
     recv_all(cht_sd, (void*)buffer, len, 0);
     strcpy(username, buffer);
+
+    printf("%s\n", username);
 
     // LO AGGIUNGO ALLA CHATROOM
     printf("<LOG-C> Aggiungo lo USERNAME alla CHATROOM\n");
@@ -617,6 +626,7 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
     while(user != NULL){
       len = strlen(user->name)+1;
       lmsg = htons(len);
+      sprintf(buffer,"%s", user->name);
       printf("<LOG-M> Invio lo USERNAME\n");
       ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
       ret = send_all(sd, (void*) buffer, len, 0);

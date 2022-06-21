@@ -21,7 +21,7 @@ void display_help_message();
 int login_check(char *user, char *pw);
 int username_used(char *user);
 int signup(char *user, char *pw);
-int present(struct user_data** head_ref, char *username);
+int present(struct user_data* head_ref, char *username);
 void update_register(struct user_data** head_ref, char *username, short port, int sd);
 void push_registro(struct user_data** head_ref, char *username, short port, int sd);
 void push_user(struct user_data** head_ref, struct user_data* user);
@@ -49,8 +49,8 @@ void find_last_timestamp(time_t* timestamp, struct hanging_msg* l_msg, char* use
 int forward_msg(short port, char* sender, int seq_n, char* msg);
 void forward_msg_ack(short port, char* dest, int seq_n);
 // ***************** //
-void save_register(struct user_data* _register);
-void load_register(struct user_data** register_r);
+void save_register(struct user_data* u_register);
+void load_register(struct user_data** u_register_r);
 void save_l_chat(struct chat* l_chat);
 void load_l_chat(struct chat** l_chat_r);
 void copy_hang_msg(struct hanging_msg* dest_r, struct hanging_msg* source_r);
@@ -59,5 +59,6 @@ void copy_chat(struct chat* dest_r, struct chat* source_r);
 void copy_user_data(struct user_data* dest_r, struct user_data* source_r);
 struct msg_ack* create_ack(char* dest, int seq_n);
 struct msg_ack* remove_ack(struct msg_ack** l_ack_r);
+void close_all_connections(struct user_data* u_register);
 
 #endif

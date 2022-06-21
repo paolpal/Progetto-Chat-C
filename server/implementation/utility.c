@@ -72,12 +72,12 @@ int signup(char *user, char *pw){
 // lo username specificato sia o meno nel
 // registro passato
 // ****************************************
-int present(struct user_data** head_ref, char *username){
-  struct user_data* current = *head_ref;
+int present(struct user_data* u_register, char *username){
+  struct user_data* c_user = u_register;
   int found = 0;
-  while(current != NULL){
-    if(strcmp(current->username, username)==0 && current->t_logout!=0) found = 1;
-    current = current->next;
+  while(c_user != NULL){
+    if(strcmp(c_user->username, username)==0) found = 1;
+    c_user = c_user->next;
   }
   return found;
 }
@@ -133,23 +133,23 @@ void update_register(struct user_data** head_ref, char *username, short port, in
 // se sono già loggato (timestamp_logout == NULL) allora non posso loggare un'altra volta (O si?)
 // (Problema della doppia porta, il primo client non riceve più i messaggi)
 //
-void push_registro(struct user_data** head_ref, char *username, short port, int sd){
-  if(!present(head_ref, username)){
+void push_registro(struct user_data** u_register_ref, char *username, short port, int sd){
+  if(!present(*u_register_ref, username)){
     struct user_data* new_node = (struct user_data*) malloc(sizeof(struct user_data));
     strncpy(new_node->username, username, S_BUF_LEN);
     new_node->port = port;
     new_node->sd = sd;
-    new_node->next = (*head_ref);
+    new_node->next = (*u_register_ref);
     //new_node->t_login = (time_t*) malloc(sizeof(time_t));
     time(&new_node->t_login);
     //printf("TEST 1\n");
     new_node->t_logout = 0;
     //printf("TEST 2\n");
-    (*head_ref) = new_node;
+    (*u_register_ref) = new_node;
   }
   // ALTRIMENTI RESETTO I TIMESTAMP
   //reset_timestamp(head_ref, username);
-  update_register(head_ref, username, port, sd);
+  update_register(u_register_ref, username, port, sd);
 }
 
 void push_user(struct user_data** l_user_r, struct user_data* user){
@@ -222,6 +222,8 @@ void display_list(struct user_data* head) {
   while(temp!=NULL){
     if(temp->t_logout == 0)
       printf("%s*%d*%s", temp->username, temp->port, ctime(&(temp->t_login)));
+    else
+      printf("%s*%d*%s*%s", temp->username, temp->port, ctime(&(temp->t_login)), ctime(&(temp->t_logout)));
     temp=temp->next;
   }
   return;
@@ -246,10 +248,11 @@ int login(struct user_data** head_ref, char *user, char *pw, short port, int sd)
 // ****************************************
 int logout(struct user_data** l_user_r, char *username){
   struct user_data* c_user = *l_user_r;
+  if(username == NULL) return 0;
   while(c_user != NULL){
     if(strcmp(c_user->username, username)==0){
       time(&c_user->t_logout);
-      close(c_user->sd);
+      // close(c_user->sd); NON POSSO CHIUDERLA QUA, DEVO RISPONDERE
       return 1;
     }
     c_user = c_user->next;
@@ -558,6 +561,7 @@ void save_register(struct user_data* _register){
   while(c_user!=NULL){
     next_user = c_user->next;
     c_user->next = NULL;
+    if(c_user->t_logout==0) time(&c_user->t_logout);
     fwrite (c_user, sizeof(struct user_data), 1, register_file_p);
     c_user = next_user;
   }
@@ -739,4 +743,15 @@ struct msg_ack* create_ack(char* dest, int seq_n){
   strncpy(ack->dest, dest, S_BUF_LEN);
   ack->seq_n = seq_n;
   return ack;
+}
+
+void close_all_connections(struct user_data* u_register){
+
+  struct user_data* c_user = u_register;
+
+  while(c_user!=NULL){
+    close(c_user->sd);
+    c_user->sd = 0;
+    c_user = c_user->next;;
+  }
 }

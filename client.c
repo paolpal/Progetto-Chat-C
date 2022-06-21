@@ -159,7 +159,7 @@ int main(int argc, char const *argv[]) {
             else if(strcmp(command,"help")==0) display_help_message();
             else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
               dest = strtok(NULL, " ");
-              if(is_in_addr_book(dest)){
+              if(is_in_addr_book(dest, logged_username)){
                 chatting = 1;
                 print_chat(l_chat, dest, logged_username);
                 append_user(&chatroom, dest);
@@ -196,6 +196,7 @@ int main(int argc, char const *argv[]) {
                 }
                 user = user->next;
               }
+              delete_chatroom(&chatroom);
             }
             else if(strcmp(sh_cmd,"\\p")==0) print_chatroom(chatroom);
             else if(strcmp(sh_cmd,"\\u")==0) group_protocol_client(srv_sd); // CORREGGI IL PROTOCOLLO

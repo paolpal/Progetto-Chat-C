@@ -173,7 +173,7 @@ int main(int argc, char const *argv[]) {
             // *******************************************************
             else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
               dest = strtok(NULL, " ");
-              if(is_in_addr_book(dest)){
+              if(is_in_addr_book(dest, logged_username)){
                 chatting = 1;
                 print_chat(l_chat, dest);
               }

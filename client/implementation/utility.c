@@ -22,20 +22,18 @@ struct user* append_user(struct user** chatroom, char* username){
 // *********************************************
 // Rimuove l'utente specificato dalla chatroom
 // *********************************************
-void remove_user(struct user** chatroom, char* username){
+struct user* remove_user(struct user** chatroom, char* username){
   struct user* user = *chatroom, *prev;
   if(user != NULL && strcmp(user->name,username)==0) {
     *chatroom = user->next;
-    free(user);
-    return;
+    return user;
   }
   while(user != NULL && strcmp(user->name,username)!=0) {
     prev = user;
     user = user->next;
   }
-  if(user == NULL) return;
-  prev->next = user->next;
-  free(user);
+  if(user != NULL) prev->next = user->next;
+  return user;
 }
 
 // *********************************************
@@ -140,14 +138,23 @@ void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n){
 
 // *************************************
 // controllo che lo username specificato
-// sia nella rubrica, altrimenti non
+// sia nella rubrica dell'utente, altrimenti non
 // posso aprire la chat e ritorno 0
 // *************************************
-int is_in_addr_book(char* username){
+int is_in_addr_book(char* username, char* c_user){
   FILE *addr_book_file = NULL;
   char c_name[512];
+  char* filename;
   int found = 0;
-  if((addr_book_file = fopen("rubrica.txt","r")) == NULL){
+  int len;
+
+  len = strlen(c_user)+13;
+  filename = (char*)malloc(len*sizeof(char));
+  sprintf(filename,"%s_rubrica.txt", c_user);
+  addr_book_file = fopen(filename,"r");
+  free(filename);
+
+  if(addr_book_file == NULL){
     exit(1);
   }
   while(!found && fscanf(addr_book_file,"%s", c_name) != EOF){
@@ -194,7 +201,7 @@ void save_chats(struct chat* l_chats, char* my_user){
 
   struct chat* c_chat = l_chats;
 
-  len = strlen(my_user)+10;
+  len = strlen(my_user)+11;
   filename = (char*)malloc(len*sizeof(char));
   sprintf(filename,"%s_chats.dat", my_user);
   chat_file_p = fopen (filename, "wb");
@@ -205,7 +212,7 @@ void save_chats(struct chat* l_chats, char* my_user){
 
   printf("<LOG> Aperto il file CHATS.DAT.\n");
   while(c_chat!=NULL){
-    len = strlen(c_chat->name)+strlen(my_user)+5;
+    len = strlen(c_chat->name)+strlen(my_user)+6;
     filename = (char*)malloc(len*sizeof(char));
     sprintf(filename,"%s_%s.dat", my_user, c_chat->name);
     msg_file_p = fopen (filename, "wb");
@@ -242,7 +249,7 @@ void load_chats(struct chat** l_chats_ref, char* my_user){
   struct msg in_msg;
   struct msg* new_msg;
 
-  len = strlen(my_user)+10;
+  len = strlen(my_user)+11;
   filename = (char*)malloc(len*sizeof(char));
   sprintf(filename,"%s_chats.dat", my_user);
   chat_file_p = fopen (filename, "rb");
@@ -252,7 +259,7 @@ void load_chats(struct chat** l_chats_ref, char* my_user){
   }
 
   while(fread(&in_chat, sizeof(struct chat), 1, chat_file_p)){
-    len = strlen(in_chat.name)+strlen(my_user)+5;
+    len = strlen(in_chat.name)+strlen(my_user)+6;
     filename = (char*)malloc(len*sizeof(char));
     sprintf(filename, "%s_%s.dat", my_user, in_chat.name);
     msg_file_p = fopen (filename, "rb");
@@ -273,4 +280,16 @@ void load_chats(struct chat** l_chats_ref, char* my_user){
 
   }
   fclose(chat_file_p);
+}
+
+int lenght(struct user* chatroom){
+  struct user* c_user = chatroom;
+  int count = 0;
+
+  while(c_user!=NULL){
+    count++;
+    c_user = c_user->next;
+  }
+
+  return count;
 }

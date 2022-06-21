@@ -32,7 +32,7 @@ struct chat{
 struct user{
   char name[S_BUF_LEN];
   int cht_sd;
-  struct chat* chat;
+  struct chat* chat; //riferimento alla lista, per praticità
   struct sockaddr_in addr;
   struct user* next;
 };
