@@ -400,7 +400,7 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){
 // e la stampa...
 // ***********************************************
 void group_protocol_client(int srv_sd){
-  int ret, len;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *username;
@@ -434,23 +434,23 @@ void group_protocol_client(int srv_sd){
 // di una chatroom...
 // **************************************************
 void add_user_request_protocol_client(int cht_sd, char* username){
-  int len, ret;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   //INVIO LA RICHIESTA DI AGGIUNTA USERNAME
   printf("<LOG-M> Invio richiesta di ADD USER\n");
   sprintf(buffer,"%s", "ADD");
-  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG-M> Invio lo USERNAME\n");
   len = strlen(username)+1;
   lmsg = htons(len);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME
   sprintf(buffer,"%s", username);
-  ret = send(cht_sd, (void*) buffer, len, 0);
+  send_all(cht_sd, (void*) buffer, len, 0);
 }
 
 // **************************************************
@@ -459,7 +459,7 @@ void add_user_request_protocol_client(int cht_sd, char* username){
 // aggiungerlo alla CHATROOM...
 // **************************************************
 void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, char* c_username){
-  int ret, len;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *username;
@@ -491,23 +491,23 @@ void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, 
 // utenti in ascolto...
 // ******************************************
 void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
-  int len, ret;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   //INVIO LA RICHIESTA DI USCITA
   printf("<LOG> Invio richiesta di LEAVE\n");
   sprintf(buffer,"%s", "BEY");
-  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Invio lo USERNAME (IO)\n");
   len = strlen(my_username)+1;
   lmsg = htons(len);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME
   sprintf(buffer,"%s", my_username);
-  ret = send(cht_sd, (void*) buffer, len, 0);
+  send_all(cht_sd, (void*) buffer, len, 0);
 }
 
 // ******************************************
@@ -517,7 +517,7 @@ void leave_chatroom_request_protocol_client(int cht_sd, char* my_username){
 // si coccupa di rimuoverlo
 // ******************************************
 void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatting){
-  int ret, len;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *username;
@@ -555,7 +555,7 @@ void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chat
 // altrimenti continuo a scrivere solo a lui
 // **************************************************
 void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct user** chatroom_ref){
-  int len, ret;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char username[S_BUF_LEN];
@@ -563,16 +563,16 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
   //INVIO LA RICHIESTA DI UNIONE
   printf("<LOG-C> Invio richiesta di JOIN (SINCRONIZZAZIONE)\n");
   sprintf(buffer,"%s", "JNG");
-  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL MIO USERNAME
   printf("<LOG-C> Invio lo USERNAME (IO)\n");
   len = strlen(my_username)+1;
   lmsg = htons(len);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MIO USERNAME
   sprintf(buffer,"%s", my_username);
-  ret = send(cht_sd, (void*) buffer, len, 0);
+  send_all(cht_sd, (void*) buffer, len, 0);
 
   // ASPETTO LA LISTA DI UTENTI DA AGGIUNGERE ALLA CHATROOM
   printf("<LOG-C> Attendo la lista di UTENTI da aggiungere alla CHATTING ROOM\n");
