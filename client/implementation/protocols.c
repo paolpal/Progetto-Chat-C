@@ -603,7 +603,7 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
 // altrimenti chiudo la trasmissione.
 // ************************************************
 void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatting){
-  int ret;
+
   uint16_t lmsg;
   int len;
   char buffer[BUF_LEN];
@@ -642,7 +642,7 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
 // passa attraverso il  server, che inoltra al mittente corretto l'ACK
 // **********************************************************************
 void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int seq_n){
-  int ret, len;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
@@ -681,7 +681,7 @@ void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int s
 // Applico l'ACK al messaggio corretto.
 // ************************************************
 void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
-  int ret, seq_n, len;
+  int seq_n, len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char username[S_BUF_LEN];
@@ -708,7 +708,7 @@ void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
 // controllo se lo user che voglio contattare è online
 // ********************************************************
 int online_check_protocol_client(int srv_sd, char* username){
-  int ret, len, val;
+  int len, val;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 

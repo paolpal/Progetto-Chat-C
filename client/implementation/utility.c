@@ -4,11 +4,9 @@
 // Aggiunge l'utente specificato alla chatroom
 // *********************************************
 struct user* append_user(struct user** chatroom, char* username){
-  int len;
   struct user* new_user;
   if(*chatroom==NULL){
     new_user = (struct user*)malloc(sizeof(struct user));
-    len = strlen(username)+1;
     strcpy(new_user->name, username);
     new_user->cht_sd = 0;
     new_user->next = NULL;
