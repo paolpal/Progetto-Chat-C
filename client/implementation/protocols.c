@@ -7,34 +7,34 @@
 // Attende quindi l'esito dal server...
 // ********************************************
 int signup_protocol_client(int sd, char* user, char* pw){
-  int ret;
+
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   // FACCIO RICHIESTA DI ISCRIZIONE
   sprintf(buffer,"%s", "SGN");
   printf("<LOG-M> Invio richiesta di SIGNUP\n");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME
   printf("<LOG-M> Invio lo USERNAME\n");
   int len = strlen(user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL NOME
   sprintf(buffer,"%s", user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DELLA password
   printf("<LOG-M> Invio la PASSWORD\n");
   len = strlen(pw)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LA PASSWORD
   sprintf(buffer,"%s", pw);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
-  ret = recv_all(sd, (void*) buffer, ACK_LEN, 0);
+  recv_all(sd, (void*) buffer, ACK_LEN, 0);
   printf("<LOG-M> Attendo il FEEDBACK dal SERVER\n");
 
   if(strcmp(buffer,"SIGNED")==0) return 1;
@@ -48,41 +48,40 @@ int signup_protocol_client(int sd, char* user, char* pw){
 // Attende quindi l'esito dal server...
 // ********************************************
 int login_protocol_client(int sd, char* user, char* pw, short port){
-  int ret;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   // FACCIO RICHIESTA DI LOGIN
   sprintf(buffer,"%s", "LIN");
   printf("<LOG-M> Invio richiesta di LOGIN\n");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
 
   //INVIO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG-M> Invio lo USERNAME\n");
   int len = strlen(user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME
   sprintf(buffer,"%s", user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DELLA PASSWORD
   printf("<LOG-M> Invio la PASSWORD\n");
   len = strlen(pw)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LA PASSWORD
   sprintf(buffer,"%s", pw);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   //INVIO PORTA
   lmsg = htons(port);
   printf("<LOG-M> Invio la PORTA di ascolto\n");
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
 
   printf("<LOG-M> Attendo il FEEDBACK dal SERVER\n");
-  ret = recv_all(sd, (void*) buffer, ACK_LEN, 0);
+  recv_all(sd, (void*) buffer, ACK_LEN, 0);
 
   if(strcmp(buffer,"LOGGED")==0)return 1;
   else return 0;
@@ -94,26 +93,25 @@ int login_protocol_client(int sd, char* user, char* pw, short port){
 // Attende quindi l'esito dal server...
 // ********************************************
 int logout_protocol_client(int sd, char* user){
-  int ret;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   // FACCIO RICHIESTA DI LOGOUT
   sprintf(buffer,"%s", "OUT");
   printf("<LOG-M> Invio richiesta di LOGOUT\n");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME
   printf("<LOG-M> Invio lo USERNAME\n");
   int len = strlen(user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL NOME
   sprintf(buffer,"%s", user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   printf("<LOG-M> Attendo il FEEDBACK dal SERVER\n");
-  ret = recv_all(sd, (void*) buffer, ACK_LEN, 0);
+  recv_all(sd, (void*) buffer, ACK_LEN, 0);
 
   if(strcmp(buffer,"EXITED")==0)return 1;
   else return 0;
@@ -132,41 +130,41 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
 
   sprintf(buffer,"%s", "CHT");
   printf("<LOG> Invio richiesta di CHAT\n");
-  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME DESTINATARIO
   printf("<LOG> Invio lo USERNAME destinatario\n");
   len = strlen(dest_user)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL NOME DESTINATARIO
   sprintf(buffer,"%s", dest_user);
-  ret = send_all(srv_sd, (void*) buffer, len, 0);
+  send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL NOME MITTENTE
   printf("<LOG> Invio lo USERNAME mittente (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL NOME MITTENTE
   sprintf(buffer,"%s", my_user);
-  ret = send_all(srv_sd, (void*) buffer, len, 0);
+  send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL MESSAGGIO
   printf("<LOG> Invio il MESSAGGIO\n");
   len = strlen(msg)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MESSAGGIO
-  ret = send_all(srv_sd, (void*) msg, len, 0);
+  send_all(srv_sd, (void*) msg, len, 0);
 
   //INVIO IL NUMERO DI SEQUENZA
   lmsg = htons(seq_n);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
 
   //RICEVO LA PORTA DEL CONTATTO
   printf("<LOG> Attendo il FEEDBACK dal SERVER\n");
-  ret = recv_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  recv_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   port = ntohs(lmsg);
 
   if(port==0) return 0;
@@ -194,7 +192,7 @@ int new_chat_protocol_client(int srv_sd, char* my_user, char* dest_user, struct 
 // stati spediti
 // ********************************************
 void hanging_protocol_client(int sd, char* user){
-  int ret, len, n_msg;
+  int len, n_msg;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *sender;
@@ -202,16 +200,16 @@ void hanging_protocol_client(int sd, char* user){
   //INVIO LA RICHIESTA DI HANGING
   printf("<LOG-M> Invio richiesta di HANGING\n");
   sprintf(buffer,"%s", "HNG");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL DESTINATARIO (current client)
   printf("<LOG-M> Invio lo USERNAME (IO)\n");
   len = strlen(user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL DESTINATARIO
   sprintf(buffer,"%s", user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   printf("<LOG-M> Attendo la lista di MITTENTI dal SERVER\n");
 
@@ -255,7 +253,7 @@ void hanging_protocol_client(int sd, char* user){
 // di ricezione.
 // ********************************************
 void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat){
-  int ret, len, seq_n;
+  int len, seq_n;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *msg_text;
@@ -264,25 +262,25 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
   //INVIO LA RICHIESTA DI SHOW
   printf("<LOG-M> Invio richiesta di SHOW\n");
   sprintf(buffer,"%s", "SHW");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL DESTINATARIO (current client)
   printf("<LOG-M> Invio lo USERNAME destinatario (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL DESTINATARIO
   sprintf(buffer,"%s", my_user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL MITTENTE
   printf("<LOG-M> Invio lo USERNAME mittente\n");
   len = strlen(sender_user)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MITTENTE
   sprintf(buffer,"%s", sender_user);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   printf("<LOG-M> Attendo la lista dei MESSAGGI dal SERVER\n");
   while(1){
@@ -326,18 +324,18 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
 // di ricezione...
 // *************************************
 void receive_file_protocol_client(int sd){
-  int ret, len;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *filename;
 
   //RICEVO LA LUNGHEZZA DEL FILENAME
   printf("<LOG-M> RICEVO il FILENAME\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   filename = (char*) malloc(len*sizeof(char));
   //RICEVO IL FILENAME
-  ret = recv_all(sd, (void*)buffer, len, 0);
+  recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", filename);
 
   //RICEVO IL FILE
@@ -360,7 +358,7 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){
   char buffer[BUF_LEN];
 
   strtok(filename, "\n");
-  
+
   printf("<LOG> Controllo il file per il trasferimento...\n");
   if(access(filename, F_OK) != 0){
     printf("<LOG> File non accessibile...\n");
@@ -378,16 +376,16 @@ void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename){
   //INVIO LA RICHIESTA DI SHARE
   printf("<LOG> Invio richiesta di SHARE FILE\n");
   sprintf(buffer,"%s", "SHR");
-  ret = send_all(sd, (void*)buffer, REQ_LEN, 0);
+  send_all(sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL FILENAME
   printf("<LOG> Invio il FILENAME\n");
   len = strlen(filename)+1;
   lmsg = htons(len);
-  ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL FILENAME
   sprintf(buffer,"%s", filename);
-  ret = send_all(sd, (void*) buffer, len, 0);
+  send_all(sd, (void*) buffer, len, 0);
 
   //INVIO IL FILE
   printf("<LOG> Invio il FILE\n");
@@ -410,7 +408,7 @@ void group_protocol_client(int srv_sd){
   //INVIO LA RICHIESTA DI GROUP
   printf("<LOG-M> Invio richiesta di GROUP\n");
   sprintf(buffer,"%s", "GRP");
-  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   while(1){
     //RICEVO LA LUNGHEZZA DELLO USERNAME
@@ -468,11 +466,11 @@ void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, 
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG-M> Ricevo lo USERNAME\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME
-  ret = recv_all(sd, (void*)buffer, len, 0);
+  recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
   //AGGIUNGO L'UTENTE AL CHATTING PROCESS
@@ -527,11 +525,11 @@ void leave_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chat
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Ricevo lo USERNAME\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME
-  ret = recv_all(sd, (void*)buffer, len, 0);
+  recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
   //RIMUOVO L'UTENTE DALLA CHATTING ROOM
@@ -614,11 +612,11 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG> Ricevo lo USERNAME\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   username = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME
-  ret = recv_all(sd, (void*)buffer, len, 0);
+  recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
   if(chatting && chatting_with(buffer, *chatroom_ref)){
@@ -628,13 +626,13 @@ void join_chatroom_protocol_client(int sd, struct user** chatroom_ref, int chatt
       lmsg = htons(len);
       sprintf(buffer,"%s", user->name);
       printf("<LOG-M> Invio lo USERNAME\n");
-      ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
-      ret = send_all(sd, (void*) buffer, len, 0);
+      send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+      send_all(sd, (void*) buffer, len, 0);
       user=user->next;
     }
     printf("<LOG-M> Fine trasmissione\n");
     lmsg = htons(0);
-    ret = send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
+    send_all(sd, (void*) &lmsg, sizeof(uint16_t), 0);
   }
 }
 
@@ -651,30 +649,30 @@ void send_msg_ack_protocol_client(int srv_sd, char *my_user, char *sender, int s
   // FACCIO RICHIESTA DI MESSAGE ACK
   sprintf(buffer,"%s", "MAK");
   printf("<LOG-M> Invio richiesta di MESSAGE ACK\n");
-  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME MITTENTE
   printf("<LOG-M> Invio lo USERNAME mittente\n");
   len = strlen(sender)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME MITTENTE
   sprintf(buffer,"%s", sender);
-  ret = send_all(srv_sd, (void*) buffer, len, 0);
+  send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
   printf("<LOG-M> Invio lo USERNAME destinatario (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME DESTINATARIO
   sprintf(buffer,"%s", my_user);
-  ret = send_all(srv_sd, (void*) buffer, len, 0);
+  send_all(srv_sd, (void*) buffer, len, 0);
 
   //INVIO IL NUMERO DI SEQUENZA
   printf("<LOG-M> Invio il NUMERO di SEQUENZA\n");
   lmsg = htons(seq_n);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
 }
 
 // ************************************************
@@ -690,16 +688,16 @@ void recv_msg_ack_protocol_client(int sd, struct chat** l_chat_ref){
 
   //RICEVO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
   printf("<LOG-M> Ricevo lo USERNAME\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   //username = (char*) malloc(len*sizeof(char));
   //RICEVO LO USERNAME DESTINATARIO
-  ret = recv_all(sd, (void*)buffer, len, 0);
+  recv_all(sd, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
   //RICEVO IL NUMERO DI SEQUENZA
   printf("<LOG-M> Ricevo il NUMERO di SEQUENZA\n");
-  ret = recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(sd, (void*)&lmsg, sizeof(uint16_t), 0);
   seq_n = ntohs(lmsg);
 
   //APPLICO L'ACK AL MESSAGGIO
@@ -717,20 +715,20 @@ int online_check_protocol_client(int srv_sd, char* username){
   // FACCIO RICHIESTA DI CHECK ONLINE
   sprintf(buffer,"%s", "ONL");
   printf("<LOG-M> Invio richiesta di CHECK ONLINE\n");
-  ret = send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(srv_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME
   printf("<LOG-M> Invio lo USERNAME\n");
   len = strlen(username)+1;
   lmsg = htons(len);
-  ret = send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(srv_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME
   sprintf(buffer,"%s", username);
-  ret = send_all(srv_sd, (void*) buffer, len, 0);
+  send_all(srv_sd, (void*) buffer, len, 0);
 
   //RICEVO LA VALUTAZIONE DAL SERVER
   printf("<LOG-M> Ricevo la VALUTAZIONE DEL SERVER\n");
-  ret = recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
+  recv_all(srv_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   val = ntohs(lmsg);
 
   return val;

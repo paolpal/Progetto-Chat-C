@@ -6,35 +6,35 @@
 // viene invocata dal CHATTING PROCESS
 // *********************************************
 void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
-  int len, ret;
+  int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
   //INVIO LA RICHIESTA DI MESSAGGIO
   printf("<LOG-C> Invio richiesta di MESSAGE\n");
   sprintf(buffer, "MSG");
-  ret = send(cht_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL MITTENTE
   printf("<LOG-C> Invio lo USERNAME mittente (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MITTENTE
   sprintf(buffer,"%s", my_user);
-  ret = send(cht_sd, (void*) buffer, len, 0);
+  send_all(cht_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL MESSAGGIO
   printf("<LOG-C> Invio il MESSAGGIO\n");
   len = strlen(msg)+1;
   lmsg = htons(len);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO IL MESSAGGIO
-  ret = send(cht_sd, (void*) msg, len, 0);
+  send_all(cht_sd, (void*) msg, len, 0);
 
   //INVIO IL NUMERO DI SEQUENZA
   lmsg = htons(seq_n);
-  ret = send(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   return;
 }
 
@@ -112,9 +112,7 @@ void add_msg(struct chat **l_chat, struct msg *msg, char* my_user){
 // Aggiungo una chat in testa alla lista
 // ******************************************
 struct chat* add_chat(struct chat **l_chat, char* user){
-  int len;
   struct chat *new_chat  = (struct chat*) malloc(sizeof(struct chat));
-  len = strlen(user)+1;
   strncpy(new_chat->name, user, S_BUF_LEN);
   new_chat->l_msg=NULL;
   new_chat->next_seq_n = 0;
