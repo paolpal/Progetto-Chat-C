@@ -68,6 +68,10 @@ int main(int argc, char const *argv[]) {
 
   listen(listener, 10);
 
+  memset(&srv_addr, 0, sizeof(srv_addr));
+  srv_addr.sin_family = AF_INET;
+  inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
+
   FD_ZERO(&master);
   FD_ZERO(&read_fds);
 
@@ -98,16 +102,26 @@ int main(int argc, char const *argv[]) {
             strtok(buffer, "\n");
             nump = parametrs_num(buffer);
             command = strtok(buffer," ");
-            if(!logged && strcmp(command,"signup")==0 && (nump == 2)){
+            if(!logged && strcmp(command,"signup")==0 && (nump == 3)){
               // ************************************************
               // strtok(NULL ... ) continua a riferirsi
               // all'ultima stringa passata quindi buffer
               // ************************************************
+              number = strtok(NULL, " ");
+              srv_port = atoi(number);
               username = strtok(NULL, " ");
               password = strtok(NULL, " ");
-              if(signup_protocol_client(srv_sd, username, password)){
+
+              srv_addr.sin_port = htons(srv_port);
+              srv_sd = socket(AF_INET, SOCK_STREAM, 0);
+              ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
+
+              if(ret<0) perror("Connessione non riuscita");
+              else if(signup_protocol_client(srv_sd, username, password)){
                 printf("Iscrizione avvenuta con successo!\n");
               }
+
+              close(srv_sd);
             }
             else if(!logged && strcmp(command,"in")==0 && (nump == 3)){
               number = strtok(NULL, " ");
@@ -115,14 +129,10 @@ int main(int argc, char const *argv[]) {
               username = strtok(NULL, " ");
               password = strtok(NULL, " ");
 
-              memset(&srv_addr, 0, sizeof(srv_addr));
-              srv_addr.sin_family = AF_INET;
               srv_addr.sin_port = htons(srv_port);
-              inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
-
               srv_sd = socket(AF_INET, SOCK_STREAM, 0);
-
               ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
+
               printf("<LOG> Apro una connessione TCP con il SERVER\n");
               if(ret<0){
                 perror("Connessione non riuscita");
