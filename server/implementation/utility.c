@@ -513,7 +513,7 @@ int forward_msg(short port, char* sender, int seq_n, char* msg){
 // e numero di sequenza...
 // ****************************************
 void forward_msg_ack(short port, char* dest, int seq_n){
-  int len, ret, cln_sd;
+  int len, cln_sd;
   uint16_t lmsg;
   char buffer[BUF_LEN];
 
@@ -526,23 +526,23 @@ void forward_msg_ack(short port, char* dest, int seq_n){
   dest_addr.sin_family = AF_INET;
   dest_addr.sin_port = htons(port);
   inet_pton(AF_INET, "127.0.0.1", &dest_addr.sin_addr);
-  ret = connect(cln_sd, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+  connect(cln_sd, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
 
   // FACCIO RICHIESTA DI MESSAGE ACK
   sprintf(buffer,"%s", "MAK");
-  ret = send_all(cln_sd, (void*)buffer, REQ_LEN, 0);
+  send_all(cln_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DELLO USERNAME DESTINATARIO
   len = strlen(dest)+1;
   lmsg = htons(len);
-  ret = send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
   //INVIO LO USERNAME DESTINATARIO
   sprintf(buffer,"%s", dest);
-  ret = send_all(cln_sd, (void*) buffer, len, 0);
+  send_all(cln_sd, (void*) buffer, len, 0);
 
   //INVIO IL NUMERO DI SEQUENZA
   lmsg = htons(seq_n);
-  ret = send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
+  send_all(cln_sd, (void*) &lmsg, sizeof(uint16_t), 0);
 
   //CHIUDO LA SOCKET
   close(cln_sd);
