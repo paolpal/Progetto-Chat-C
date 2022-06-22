@@ -129,6 +129,7 @@ void logout_protocol(int i, struct user_data** l_user_r, char* buffer){
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", username);
 
+  printf("Eseguo il LOGOUT\n");
   if(logout(l_user_r, username)){
     sprintf(buffer, "%s", "EXITED");
   }

@@ -42,6 +42,7 @@ int username_used(char *user){
   char username[512], password[512];
   int found = 0;
   if((login_file = fopen("login.txt","r")) == NULL){
+    perror("FILE login.txt mancante...");
     exit(1);
   }
   while(fscanf(login_file,"%s %s", username, password) != EOF){

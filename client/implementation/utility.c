@@ -153,6 +153,7 @@ int is_in_addr_book(char* username, char* c_user){
   free(filename);
 
   if(addr_book_file == NULL){
+    perror("Rubrica mancante...");
     exit(1);
   }
   while(!found && fscanf(addr_book_file,"%s", c_name) != EOF){
