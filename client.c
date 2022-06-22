@@ -84,7 +84,7 @@ int main(int argc, char const *argv[]) {
     for(i=0; i<=fdmax; i++){
       if(FD_ISSET(i, &read_fds)){
         if(logged && i == listener){
-          printf("<LOG> Ricevuta una connessione.\n");
+          fprintf(stderr,"<LOG> Ricevuta una connessione.\n");
           addrlen = sizeof(peer_addr);
           newfd = accept(listener, (struct sockaddr*)&peer_addr, &addrlen);
           FD_SET(newfd, &master);
@@ -135,7 +135,7 @@ int main(int argc, char const *argv[]) {
               srv_sd = socket(AF_INET, SOCK_STREAM, 0);
               ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
 
-              printf("<LOG> Apro una connessione TCP con il SERVER\n");
+              fprintf(stderr,"<LOG> Apro una connessione TCP con il SERVER\n");
               if(ret<0){
                 perror("Connessione non riuscita");
                 //exit(0);
@@ -297,27 +297,27 @@ int main(int argc, char const *argv[]) {
           // le comunicazioni su pipe avvengono con le stesse modalità delle socket:
           // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           if(strcmp(buffer, "MSG")==0){
-            printf("<LOG> Ricevo richiesta di MESSAGE\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di MESSAGE\n");
             recv_msg(srv_sd, i, chatting, logged_username, &l_chat, &chatroom);
           }
           else if(strcmp(buffer, "MAK")==0){
-            printf("<LOG> Ricevo richiesta di MESSAGE ACK\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di MESSAGE ACK\n");
             recv_msg_ack_protocol_client(i, &l_chat);
           }
           else if(strcmp(buffer, "ADD")==0){
-            printf("<LOG> Ricevo richiesta di ADD USER\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di ADD USER\n");
             add_user_protocol_client(i, &chatroom, chatting, logged_username);
           }
           else if(strcmp(buffer, "SHR")==0){
-            printf("<LOG> Ricevo richiesta di SHARE FILE\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di SHARE FILE\n");
             receive_file_protocol_client(i);
           }
           else if(strcmp(buffer, "BEY")==0){
-            printf("<LOG> Ricevo richiesta di LEAVE\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di LEAVE\n");
             leave_chatroom_protocol_client(i, &chatroom, chatting);
           }
           else if(strcmp(buffer, "JNG")==0){
-            printf("<LOG> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
+            fprintf(stderr,"<LOG> Ricevo richiesta di JOIN (SINCRONIZZAZIONE)\n");
             join_chatroom_protocol_client(i, &chatroom, chatting);
           }
         }

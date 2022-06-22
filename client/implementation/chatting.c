@@ -11,12 +11,12 @@ void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
   char buffer[BUF_LEN];
 
   //INVIO LA RICHIESTA DI MESSAGGIO
-  printf("<LOG-C> Invio richiesta di MESSAGE\n");
+  fprintf(stderr,"<LOG> Invio richiesta di MESSAGE\n");
   sprintf(buffer, "MSG");
   send_all(cht_sd, (void*)buffer, REQ_LEN, 0);
 
   //INVIO LA LUNGHEZZA DEL MITTENTE
-  printf("<LOG-C> Invio lo USERNAME mittente (IO)\n");
+  fprintf(stderr,"<LOG> Invio lo USERNAME mittente (IO)\n");
   len = strlen(my_user)+1;
   lmsg = htons(len);
   send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
@@ -25,7 +25,7 @@ void send_msg(int cht_sd, char* my_user, char* msg, int seq_n){
   send_all(cht_sd, (void*) buffer, len, 0);
 
   //INVIO LA LUNGHEZZA DEL MESSAGGIO
-  printf("<LOG-C> Invio il MESSAGGIO\n");
+  fprintf(stderr,"<LOG> Invio il MESSAGGIO\n");
   len = strlen(msg)+1;
   lmsg = htons(len);
   send_all(cht_sd, (void*) &lmsg, sizeof(uint16_t), 0);
@@ -57,7 +57,7 @@ void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat**
   strncpy(msg->dest, my_user, S_BUF_LEN);
 
   //RICEVO LA LUNGHEZZA DEL MITTENTE
-  printf("<LOG-M> Ricevo lo USERNAME mittente\n");
+  fprintf(stderr,"<LOG> Ricevo lo USERNAME mittente\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   msg->next = NULL;
@@ -66,7 +66,7 @@ void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat**
   sscanf(buffer, "%s", msg->sender);
 
   //RICEVO LA LUNGHEZZA DEL MESSAGGIO
-  printf("<LOG-M> Ricevo il MESSAGGIO\n");
+  fprintf(stderr,"<LOG> Ricevo il MESSAGGIO\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   len = ntohs(lmsg);
   //RICEVO IL MESSAGGIO
@@ -74,7 +74,7 @@ void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat**
   strcpy(msg->text,buffer);
 
   //RICEVO IL NUMERO DI SEQUENZA
-  printf("<LOG-M> Ricevo il NUMERO DI SEQUENZA\n");
+  fprintf(stderr,"<LOG> Ricevo il NUMERO DI SEQUENZA\n");
   recv_all(cht_sd, (void*)&lmsg, sizeof(uint16_t), 0);
   msg->seq_n = ntohs(lmsg);
 

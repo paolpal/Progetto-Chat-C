@@ -165,7 +165,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", dest);
 
-  printf("<LOG> Ricevo il nome destinatario: %s\n", dest);
+  fprintf(stderr,"<LOG> Ricevo il nome destinatario: %s\n", dest);
 
   //RICEVO LA LUNGHEZZA DEL NOME MITTENTE
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
@@ -175,7 +175,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   recv_all(i, (void*)buffer, len, 0);
   sscanf(buffer, "%s", send);
 
-  printf("<LOG> Ricevo il nome mittente: %s\n", send);
+  fprintf(stderr,"<LOG> Ricevo il nome mittente: %s\n", send);
 
   //RICEVO LA LUNGHEZZA DEL MESSAGGIO
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
@@ -185,28 +185,28 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   recv_all(i, (void*)buffer, len, 0);
   strcpy(msg, buffer);
 
-  printf("<LOG> Ricevo il messaggio\n");
+  fprintf(stderr,"<LOG> Ricevo il messaggio\n");
 
   //RICEVO IL NUMERO DI SEQUENZA
   recv_all(i, (void*)&lmsg, sizeof(uint16_t), 0);
   seq_n = ntohs(lmsg);
 
-  printf("<LOG> Cerco il destinatario\n");
+  fprintf(stderr,"<LOG> Cerco il destinatario\n");
 
   // ricerco il destinatario tra gli utenti online
   port = find_port(utenti, dest);
-  printf("<LOG> Fine ricerca\n");
+  fprintf(stderr,"<LOG> Fine ricerca\n");
   //lo trovo : inoltro
   int rep = 0;
   int forwarded = 0;
   if(port!=0) while(!forwarded && rep < 3) {
-    printf("<LOG> Inoltro #%d a %d\n", rep, port);
+    fprintf(stderr,"<LOG> Inoltro #%d a %d\n", rep, port);
     forwarded = forward_msg(port, send, seq_n, msg);
     rep++;
   }
   //NON lo trovo : appendo
   else {
-    printf("<LOG> Appendo\n");
+    fprintf(stderr,"<LOG> Appendo\n");
     struct hanging_msg** msg_list_ref;
     msg_list_ref = find_hanging_msg(destinatari, dest);
     append_msg(msg_list_ref, dest, send, msg, seq_n);
@@ -215,7 +215,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   //rispondo sempre con la porta: se non l'ho trovata contiene ZERO
   lmsg = htons(port);
   send_all(i,(void*) &lmsg, sizeof(uint16_t), 0);
-  printf("<LOG> Rispondo con l'esito\n");
+  fprintf(stderr,"<LOG> Rispondo con l'esito\n");
 }
 
 // ********************************************

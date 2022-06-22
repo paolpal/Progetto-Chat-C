@@ -209,7 +209,7 @@ void save_chats(struct chat* l_chats, char* my_user){
     return;
   }
 
-  printf("<LOG> Aperto il file CHATS.DAT.\n");
+  fprintf(stderr,"<LOG> Aperto il file CHATS.DAT.\n");
   while(c_chat!=NULL){
     len = strlen(c_chat->name)+strlen(my_user)+6;
     filename = (char*)malloc(len*sizeof(char));
@@ -225,7 +225,7 @@ void save_chats(struct chat* l_chats, char* my_user){
         c_msg = next_msg;
       }
       fclose(msg_file_p);
-      printf("<LOG> Salvata la chat con: %s.\n",c_chat->name);
+      fprintf(stderr,"<LOG> Salvata la chat con: %s.\n",c_chat->name);
     }
     next_chat = c_chat->next;
     c_chat->next = NULL;
