@@ -43,16 +43,21 @@ void send_file(char* filename, int sockfd){
 // ************************************
 // la funzione recv_file_b(...) crea un file
 // con il filename specificato, e ascolta su
-// una sochet uno stream di byte che scrive
+// una socket uno stream di byte che scrive
 // nel file
 // ************************************
-void recv_file_b(int sd, char* filename){
+void recv_file_b(int sd, char* filename, char* c_user){
   int len, ret;
   uint16_t lmsg;
   FILE *fp;
   char buffer[BUF_LEN] = {0};
+  char* final_filename;
 
-  fp = fopen(filename, "wb");
+  len = strlen(filename) + strlen(c_user) +1;
+  final_filename = (char*) malloc(len*sizeof(char));
+  sprintf(final_filename, "%s_%s", c_user, filename);
+  fp = fopen(final_filename, "wb");
+  free(final_filename);
   if(fp==NULL){
     exit(1);
   }

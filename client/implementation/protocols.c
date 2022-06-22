@@ -323,7 +323,7 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
 // quindi richiama l'apposita funzone
 // di ricezione...
 // *************************************
-void receive_file_protocol_client(int sd){
+void receive_file_protocol_client(int sd, char* c_user){
   int len;
   uint16_t lmsg;
   char buffer[BUF_LEN];
@@ -340,7 +340,7 @@ void receive_file_protocol_client(int sd){
 
   //RICEVO IL FILE
   fprintf(stderr,"<LOG> RICEVO il FILE\n");
-  recv_file_b(sd, filename);
+  recv_file_b(sd, filename, c_user);
 
   free(filename);
 }

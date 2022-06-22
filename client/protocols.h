@@ -13,7 +13,7 @@ int logout_protocol_client(int sd, char* user);
 int new_chat_protocol_client(int sd, char* my_user, char* dest_user, struct sockaddr_in* dest_addr, char* msg, int seq_n);
 void hanging_protocol_client(int sd, char* user);
 void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat);
-void receive_file_protocol_client(int sd);
+void receive_file_protocol_client(int sd, char* c_user);
 void send_file_protocol_client(struct sockaddr_in* dest_addr, char* filename);
 void group_protocol_client(int sd);
 void add_user_request_protocol_client(int cht_sd, char* username);

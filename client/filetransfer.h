@@ -16,7 +16,7 @@
 
 void recv_file(int sockfd, char* filename);
 void send_file(char* filename, int sockfd);
-void recv_file_b(int sockfd, char* filename);
+void recv_file_b(int sd, char* filename, char* c_user);
 void send_file_b(char* filename, int sockfd);
 
 #endif

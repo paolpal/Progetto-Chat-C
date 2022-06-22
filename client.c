@@ -310,7 +310,7 @@ int main(int argc, char const *argv[]) {
           }
           else if(strcmp(buffer, "SHR")==0){
             fprintf(stderr,"<LOG> Ricevo richiesta di SHARE FILE\n");
-            receive_file_protocol_client(i);
+            receive_file_protocol_client(i, logged_username);
           }
           else if(strcmp(buffer, "BEY")==0){
             fprintf(stderr,"<LOG> Ricevo richiesta di LEAVE\n");
