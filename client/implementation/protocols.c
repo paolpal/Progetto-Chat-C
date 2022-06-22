@@ -587,8 +587,6 @@ void join_chatroom_request_protocol_client(int cht_sd, char* my_username, struct
     recv_all(cht_sd, (void*)buffer, len, 0);
     strcpy(username, buffer);
 
-    printf("%s\n", username);
-
     // LO AGGIUNGO ALLA CHATROOM
     fprintf(stderr,"<LOG> Aggiungo lo USERNAME alla CHATROOM\n");
     if(strcmp(username, my_username)!=0)
