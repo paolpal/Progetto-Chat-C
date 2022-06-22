@@ -241,8 +241,6 @@ int main(int argc, char const *argv[]) {
               strtok(buffer, " ");
               filename = strtok(NULL, " ");
               // Invio separatamente, ad ogni utente il file
-              // per non rallentare troppo, potrei creare dei sottoprocessi
-              // che inviano
               user = chatroom;
               while(user!=NULL){
                 if(user->cht_sd != 0){
@@ -294,8 +292,6 @@ int main(int argc, char const *argv[]) {
           // BEY : avvio il protocollo di rimozione di un utente che ha abbamdonato la chatroom
           // JNG : avvio il protocollo di sincronizzazione della chatroom
 
-          // le comunicazioni su pipe avvengono con le stesse modalità delle socket:
-          // per passare un stringa, prima mando la lunghezza, poi il buffer dei caratteri
           if(strcmp(buffer, "MSG")==0){
             fprintf(stderr,"<LOG> Ricevo richiesta di MESSAGE\n");
             recv_msg(srv_sd, i, chatting, logged_username, &l_chat, &chatroom);
@@ -325,7 +321,5 @@ int main(int argc, char const *argv[]) {
     }
   }
 
-  //save_chats(l_chat, logged_username);
-  //close(srv_sd);
   return 0;
 }
