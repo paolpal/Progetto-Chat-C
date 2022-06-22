@@ -224,11 +224,8 @@ void display_list(struct user_data* head) {
   while(temp!=NULL){
     if(temp->t_logout == 0)
       printf("%s*%d*%s", temp->username, temp->port, ctime(&(temp->t_login)));
-    else{
-      time_token = ctime(&(temp->t_login));
-      time_token = strtok(time_token, "\n");
-      printf("%s*%d*%.24s*%s", temp->username, temp->port, time_token, ctime(&(temp->t_logout)));
-    }
+    else
+      printf("%s*%d*%.24s*%s", temp->username, temp->port, ctime(&(temp->t_login));, ctime(&(temp->t_logout)));
     temp=temp->next;
   }
   return;
