@@ -219,7 +219,6 @@ char* find_user_by_socket(struct user_data** head_ref, int sd){
 // ****************************************
 void display_list(struct user_data* head) {
   struct user_data *temp;
-  char* time_token;
   temp=head;
   while(temp!=NULL){
     if(temp->t_logout == 0)
