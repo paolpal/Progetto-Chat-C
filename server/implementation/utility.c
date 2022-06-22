@@ -219,12 +219,16 @@ char* find_user_by_socket(struct user_data** head_ref, int sd){
 // ****************************************
 void display_list(struct user_data* head) {
   struct user_data *temp;
+  char* time_token;
   temp=head;
   while(temp!=NULL){
     if(temp->t_logout == 0)
       printf("%s*%d*%s", temp->username, temp->port, ctime(&(temp->t_login)));
-    else
-      printf("%s*%d*%s*%s", temp->username, temp->port, strtok(ctime(&(temp->t_login)),"\n"), ctime(&(temp->t_logout)));
+    else{
+      time_token = ctime(&(temp->t_login));
+      time_token = strtok(time_token, '\n');
+      printf("%s*%d*%s*%s", temp->username, temp->port, , ctime(&(temp->t_logout)));
+    }
     temp=temp->next;
   }
   return;
