@@ -124,7 +124,6 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"OUT")==0){
             printf("RICHIESTA DI LOGOUT\n");
             logout_protocol(i, &u_register, buffer);
-            //close(i);
           }
           else if(strcmp(buffer,"GRP")==0){
             printf("RICHIESTA DI GROUP\n");

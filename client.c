@@ -68,10 +68,6 @@ int main(int argc, char const *argv[]) {
 
   listen(listener, 10);
 
-  memset(&srv_addr, 0, sizeof(srv_addr));
-  srv_addr.sin_family = AF_INET;
-  inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
-
   FD_ZERO(&master);
   FD_ZERO(&read_fds);
 
@@ -112,6 +108,9 @@ int main(int argc, char const *argv[]) {
               username = strtok(NULL, " ");
               password = strtok(NULL, " ");
 
+              memset(&srv_addr, 0, sizeof(srv_addr));
+              srv_addr.sin_family = AF_INET;
+              inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
               srv_addr.sin_port = htons(srv_port);
               srv_sd = socket(AF_INET, SOCK_STREAM, 0);
               ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
@@ -129,6 +128,9 @@ int main(int argc, char const *argv[]) {
               username = strtok(NULL, " ");
               password = strtok(NULL, " ");
 
+              memset(&srv_addr, 0, sizeof(srv_addr));
+              srv_addr.sin_family = AF_INET;
+              inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
               srv_addr.sin_port = htons(srv_port);
               srv_sd = socket(AF_INET, SOCK_STREAM, 0);
               ret = connect(srv_sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
@@ -150,13 +152,15 @@ int main(int argc, char const *argv[]) {
               printf("RICHIESTA DI LOGOUT\n");
               if(logout_protocol_client(srv_sd, logged_username)){
                 printf("Logout avvenuto con successo!\n");
-                FD_CLR(listener, &master);
-                close(listener);
-                listener = 0;
+                //FD_CLR(listener, &master);
+                //close(listener);
+                close(srv_sd);
+                //listener = 0;
                 logged = 0;
                 save_chats(l_chat, logged_username);
                 delete_l_chat(&l_chat);
               }
+              else printf("Logout fallito... \n");
             }
             else if(strcmp(command,"help")==0) display_help_message();
             else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
@@ -179,6 +183,7 @@ int main(int argc, char const *argv[]) {
               printf("Arrivederci\n");
               if(logged) save_chats(l_chat, logged_username);
               close(srv_sd);
+              close(listener);
               exit(0);
             }
           }
