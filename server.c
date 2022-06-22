@@ -78,23 +78,23 @@ int main(int argc, char const *argv[]) {
           else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(l_chat);
           else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
-            printf("Inizio la procedura di CHIUSURA...\n");
-            printf("Chiudo tutte le socket...\n");
+            fprintf(stderr, "<LOG> Inizio la procedura di CHIUSURA...\n");
+            fprintf(stderr, "<LOG> Chiudo tutte le socket...\n");
             close_all_connections(u_register);
-            printf("Salvo i messaggi pendenti...\n");
+            fprintf(stderr, "<LOG> Salvo i messaggi pendenti...\n");
             save_l_chat(l_chat);
-            printf("Salvo il registro degli utenti...\n");
+            fprintf(stderr, "<LOG> Salvo il registro degli utenti...\n");
             save_register(u_register);
-            printf("Imposto lo STATO OFF...\n");
+            fprintf(stderr, "<LOG> Spengo il server...\n");
             status = OFF;
             close(listener);
             exit(0);
-          } // procedura di shutdown: chiudi socket e tutto
+          }
         }
         else{
           ret = recv_all(i, (void*)buffer, REQ_LEN, 0);
           if(ret==0){
-            printf("Client Disconnesso\n");
+            printf("<!> Client Disconnesso\n");
             fflush(stdout);
             logout(&u_register, find_user_by_socket(&u_register,i));
             close(i);
@@ -102,39 +102,39 @@ int main(int argc, char const *argv[]) {
             break;
           }
           if(strcmp(buffer,"SGN")==0){
-            printf("RICHIESTA DI SIGNUP\n");
+            printf("<*> Richiesta di SIGNUP\n");
             signup_protocol(i, buffer);
           }
           else if(strcmp(buffer,"LIN")==0){
-            printf("RICHIESTA DI LOGIN\n");
+            printf("<*> Richiesta di LOGIN\n");
             login_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"HNG")==0){
-            printf("RICHIESTA DI HANGING\n");
+            printf("<*> Richiesta di HANGING\n");
             hanging_protocol(i, &l_chat, buffer);
           }
           else if(strcmp(buffer,"SHW")==0){
-            printf("RICHIESTA DI SHOW\n");
+            printf("<*> Richiesta di SHOW\n");
             show_protocol(i, &l_chat, buffer);
           }
           else if(strcmp(buffer,"CHT")==0){
-            printf("RICHIESTA DI CHAT\n");
+            printf("<*> Richiesta di CHAT\n");
             new_chat_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"OUT")==0){
-            printf("RICHIESTA DI LOGOUT\n");
+            printf("<*> Richiesta di LOGOUT\n");
             logout_protocol(i, &u_register, buffer);
           }
           else if(strcmp(buffer,"GRP")==0){
-            printf("RICHIESTA DI GROUP\n");
+            printf("<*> Richiesta di GROUP\n");
             group_protocol(i, &u_register, buffer);
           }
           else if(strcmp(buffer,"MAK")==0){
-            printf("RICHIESTA DI MESSAGE ACK\n");
+            printf("<*> Richiesta di MESSAGE ACK\n");
             forw_msg_ack_protocol(i, &u_register, &l_chat, buffer);
           }
           else if(strcmp(buffer,"ONL")==0){
-            printf("RICHIESTA DI ONLINE CHECK\n");
+            printf("<*> Richiesta di ONLINE CHECK\n");
             online_check_protocol(i, &u_register, buffer);
           }
         }

@@ -36,7 +36,6 @@ int main(int argc, char const *argv[]) {
   char *command;
   char *number;
   char *filename;
-  //char *token;
   char cmd[6];
   char sh_cmd[3];
 
@@ -138,7 +137,6 @@ int main(int argc, char const *argv[]) {
               fprintf(stderr,"<LOG> Apro una connessione TCP con il SERVER\n");
               if(ret<0){
                 perror("Connessione non riuscita");
-                //exit(0);
               }
               else if(login_protocol_client(srv_sd, username, password, lst_port)){
                 printf("Login avvenuto con successo!\n");
@@ -152,10 +150,7 @@ int main(int argc, char const *argv[]) {
               printf("RICHIESTA DI LOGOUT\n");
               if(logout_protocol_client(srv_sd, logged_username)){
                 printf("Logout avvenuto con successo!\n");
-                //FD_CLR(listener, &master);
-                //close(listener);
                 close(srv_sd);
-                //listener = 0;
                 logged = 0;
                 save_chats(l_chat, logged_username);
                 delete_l_chat(&l_chat);
@@ -206,7 +201,7 @@ int main(int argc, char const *argv[]) {
               delete_chatroom(&chatroom);
             }
             else if(strcmp(sh_cmd,"\\p")==0) print_chatroom(chatroom);
-            else if(strcmp(sh_cmd,"\\u")==0) group_protocol_client(srv_sd); // CORREGGI IL PROTOCOLLO
+            else if(strcmp(sh_cmd,"\\u")==0) group_protocol_client(srv_sd);
             else if(strcmp(sh_cmd,"\\j")==0){
               user = chatroom;
               // invio la richiesta a tutti i membri della chatroom...

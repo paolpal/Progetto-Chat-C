@@ -243,7 +243,7 @@ void hanging_protocol_client(int sd, char* user){
 
     printf("%s %d %s", sender, n_msg, buffer);
   }
-  fprintf(stderr,"<LOG> Fine ricezione\n");
+  fprintf(stderr,"<LOG> Fine ricezione...\n");
 }
 
 // ********************************************
@@ -314,7 +314,7 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     add_msg(l_chat, msg, my_user);
     print_msg(msg, my_user);
   }
-  fprintf(stderr,"<LOG> Fine ricezione\n");
+  fprintf(stderr,"<LOG> Fine ricezione...\n");
 }
 
 // *************************************
@@ -424,7 +424,7 @@ void group_protocol_client(int srv_sd){
 
     printf("%s\n", username);
   }
-  fprintf(stderr,"<LOG> Fine ricezione\n");
+  fprintf(stderr,"<LOG> Fine ricezione...\n");
 }
 
 // **************************************************
@@ -478,7 +478,6 @@ void add_user_protocol_client(int sd, struct user** chatroom_ref, int chatting, 
 
   if(chatting){
     if(strcmp(c_username, username)!=0){
-      fprintf(stderr,"<LOG> Aggiungo lo username alla CHATROOM\n");
       append_user(chatroom_ref, username);
     }
   }
