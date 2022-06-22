@@ -226,7 +226,7 @@ void display_list(struct user_data* head) {
       printf("%s*%d*%s", temp->username, temp->port, ctime(&(temp->t_login)));
     else{
       time_token = ctime(&(temp->t_login));
-      time_token = strtok(time_token, '\n');
+      time_token = strtok(time_token, "\n");
       printf("%s*%d*%s*%s", temp->username, temp->port, time_token, ctime(&(temp->t_logout)));
     }
     temp=temp->next;
