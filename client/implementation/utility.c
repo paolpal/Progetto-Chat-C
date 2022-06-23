@@ -92,15 +92,24 @@ struct msg* create_my_msg(char* dest, char* my_username, char* text, int seq_n){
 
 void display_help_message(){
   printf("Digita un comando: \n\n");
-  printf("1) signup porta username password --> crea un account sul server\n");
-  printf("2) in porta username password --> accede ad un account sul server\n");
-  printf("3) hanging --> ricevo una lista degli utenti che mi hanno contattato\n");
-  printf("4) show username --> ricevo i messaggi pendenti mandati da *username*\n");
-  printf("5) chat username --> apro una chat con *username*\n");
-  printf("6) share filename --> invio il file agli utenti con cui sto chattando\n");
-  printf("7) out --> eseguo una disconnessione dal server\n");
-  printf("8) esc --> termino l'applicazione\n");
-  printf("9) help --> mostro il messaggio di aiuto\n");
+  printf(" 1) signup porta username password --> crea un account sul server\n");
+  printf(" 2) in porta username password --> accede ad un account sul server\n");
+  printf(" 3) hanging --> ricevo una lista degli utenti che mi hanno contattato\n");
+  printf(" 4) show username --> ricevo i messaggi pendenti mandati da *username*\n");
+  printf(" 5) chat username --> apro una chat con *username*\n");
+  printf(" 6) share filename --> invio il file agli utenti con cui sto chattando\n");
+  printf(" 7) out --> eseguo una disconnessione dal server\n");
+  printf(" 8) esc --> termino l'applicazione\n");
+  printf(" 9) help_chat --> mostra il messaggio di aiuto della chat\n");
+  printf("10) help --> mostro il messaggio di aiuto\n");
+}
+
+void display_chat_help_message(){
+  printf("Comandi di gestione della chat: \n\n");
+  printf("1) \\u --> mostra la lista degli utenti attivi\n");
+  printf("2) \\a username --> aggiunge *username* alla chatroom\n");
+  printf("3) \\p --> stama l'elenco dei partecipanti alla chat di gruppo\n");
+  printf("4) \\j --> sincronizza la lista dei partecipanti\n");
 }
 
 // *************************************

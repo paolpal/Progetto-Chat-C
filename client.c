@@ -157,6 +157,7 @@ int main(int argc, char const *argv[]) {
               else printf("Logout fallito... \n");
             }
             else if(strcmp(command,"help")==0) display_help_message();
+            else if(strcmp(command,"help_chat")==0) display_chat_help_message();
             else if(logged && strcmp(command,"chat")==0 && (nump == 1)){
               dest = strtok(NULL, " ");
               if(is_in_addr_book(dest, logged_username)){
