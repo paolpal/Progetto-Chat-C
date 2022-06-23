@@ -252,7 +252,7 @@ void hanging_protocol_client(int sd, char* user){
 // ha spedito. Una volta ricevuti, mando un'ACK
 // di ricezione.
 // ********************************************
-void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat){
+void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat** l_chat_ref){
   int len, seq_n;
   uint16_t lmsg;
   char buffer[BUF_LEN];
@@ -313,7 +313,7 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     msg->seq_n = seq_n;
 
     //add_msg(l_chat, msg, my_user);
-    chat_p = find_chat(&l_chat, msg->sender);
+    chat_p = find_chat(l_chat_ref, msg->sender);
     push_msg(&(chat_p->l_msg), msg);
     print_msg(msg, my_user);
   }
