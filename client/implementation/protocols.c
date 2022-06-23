@@ -257,6 +257,7 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
   uint16_t lmsg;
   char buffer[BUF_LEN];
   char *msg_text;
+  struct chat* chat_p;
   struct msg* msg;
 
   //INVIO LA RICHIESTA DI SHOW
@@ -311,7 +312,9 @@ void show_protocol_client(int sd, char* my_user, char* sender_user, struct chat*
     msg->next = NULL;
     msg->seq_n = seq_n;
 
-    add_msg(l_chat, msg, my_user);
+    //add_msg(l_chat, msg, my_user);
+    chat_p = find_chat(&l_chat, msg->sender);
+    push_msg(&(chat_p->l_msg), msg);
     print_msg(msg, my_user);
   }
   fprintf(stderr,"<LOG> Fine ricezione...\n");

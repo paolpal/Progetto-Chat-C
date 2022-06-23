@@ -86,7 +86,6 @@ void recv_msg(int srv_sd, int cht_sd, int chatting, char* my_user, struct chat**
       print_msg(msg, my_user);
   }
   // Inserisco il messaggio nella chat associata
-  //add_msg(l_chat_ref, msg, my_user);
   chat_p = find_chat(l_chat_ref, msg->sender);
   push_msg(&(chat_p->l_msg), msg);
 }

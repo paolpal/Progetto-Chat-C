@@ -147,7 +147,6 @@ int main(int argc, char const *argv[]) {
               else printf("Username o password errati...\n");
             }
             else if(logged && strcmp(command,"out")==0 && (nump == 0)){
-              printf("RICHIESTA DI LOGOUT\n");
               if(logout_protocol_client(srv_sd, logged_username)){
                 printf("Logout avvenuto con successo!\n");
                 close(srv_sd);
