@@ -207,7 +207,7 @@ void new_chat_protocol(int i, struct user_data** utenti, struct chat** destinata
   int rep = 0;
   int forwarded = 0;
   if(port!=0) while(!forwarded && rep < 3) {
-    fprintf(stderr,"<LOG> Inoltro...\n", rep, port);
+    fprintf(stderr,"<LOG> Inoltro...\n");
     forwarded = forward_msg(port, send, seq_n, msg);
     rep++;
   }
