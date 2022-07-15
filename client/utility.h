@@ -20,7 +20,7 @@ void print_chatroom(struct user* chatroom);
 void delete_chatroom(struct user** chatroom_ref);
 int chatting_with(char *buffer,struct user * chat_head);
 struct msg* create_my_msg(char* dest, char* my_username, char* text, int seq_n);
-void display_chat_help_message(){
+void display_chat_help_message();
 void display_help_message();
 struct msg* find_msg_list(struct chat *l_chat, char *username);
 void acknoledge_message(struct chat **l_chat_ref, char *username, int seq_n);
