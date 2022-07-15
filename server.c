@@ -75,7 +75,7 @@ int main(int argc, char const *argv[]) {
         else if(i == fileno(stdin)){
           scanf("%s", buffer);
           if(strcmp(buffer,"list")==0) display_list(u_register);
-          else if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(l_chat);
+          //if(strcmp(buffer,"msg")==0) prind_all_hanging_msg(l_chat);
           else if(strcmp(buffer,"help")==0) display_help_message();
           else if(strcmp(buffer,"esc")==0){
             fprintf(stderr, "<LOG> Inizio la procedura di CHIUSURA...\n");
